@@ -41,6 +41,7 @@ EMAIL_HOST_USER = secrets.emailHostUser
 EMAIL_HOST_PASSWORD = secrets.emailHostPassword
 
 MEDIA_ROOT = r"media/"
+MEDIA_URL = "/media/"
 
 # Application definition
 
@@ -77,6 +78,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.media',
             ],
         },
     },

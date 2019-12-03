@@ -3,88 +3,43 @@
 
 {% block content %}
     <div class="row">
-        <div class="col s12 m6 l4">
-            <div class="card blue">
-            <div class="card-image">
-                <img src="{% static "main/img/profile.jpg" %}" alt="Rick">
-                <span style="color:black" class="card-title"><strong>Rick City Beach</strong></span>
-            </div>
-            <div class="card-content">
-                <p>A brief description of this project. Enough to make it interestiong, but not enough to clutter the card.</p>
-            </div>
-            <div class="card-action">
-                <a style="color:black" href="#"><strong>Link to full project page.</strong></a>
-            </div>
-            </div>
+        {% for project, image in projects.items %}
+        {% if forloop.counter0|divisibleby:"3" %}
         </div>
+        <div class="row">
+        {% endif %}
         <div class="col s12 m6 l4">
+            {% if project.githubLink != None %}
                 <div class="card orange">
-                <div class="card-image">
-                    <img src="{% static "main/img/profile.jpg" %}" alt="Rick">
-                    <span style="color:black" class="card-title"><strong>Rick City Beach</strong></span>
-                </div>
-                <div style="color:white" class="card-content">
-                    <p>A brief description of this project. Enough to make it interestiong, but not enough to clutter the card.</p>
-                </div>
-                <div class="card-action">
-                    <a style="color:white" href="#"><strong>Link to full project page.</strong></a>
-                </div>
-                </div>
-        </div>
-        <div class="col s12 m6 l4">
+            {% else %}
                 <div class="card blue">
-                <div class="card-image">
-                    <img src="{% static "main/img/profile.jpg" %}" alt="Rick">
-                    <span style="color:black" class="card-title"><strong>Rick City Beach</strong></span>
-                </div>
-                <div class="card-content">
-                    <p>A brief description of this project. Enough to make it interestiong, but not enough to clutter the card.</p>
-                </div>
-                <div class="card-action">
-                    <a style="color:black" href="#"><strong>Link to full project page.</strong></a>
-                </div>
-                </div>
-        </div>
-        <div class="col s12 m6 l4">
-            <div class="card blue">
+            {% endif %}
             <div class="card-image">
-                <img src="{% static "main/img/profile.jpg" %}" alt="Rick">
-                <span style="color:black" class="card-title"><strong>Rick City Beach</strong></span>
+                {% if image == None %}
+                    <img src="{% static defaultImage %}">
+                {% else %}
+                    <img src="{{ image }}">
+                {% endif %}
             </div>
-            <div class="card-content">
-                <p>A brief description of this project. Enough to make it interestiong, but not enough to clutter the card.</p>
+            {% if project.githubLink != None %}
+            <div class="card-content white-text">
+            {% else %}
+            <div class="card-content black-text">
+            {% endif %}
+                <span class="card-title"><strong>{{project.title}}</strong></span>
+                <p><strong>Language: </strong>{{project.language}}</p>
+                <p><strong>Description: </strong>{{project.briefDescription}}</p>
             </div>
             <div class="card-action">
-                <a style="color:black" href="#"><strong>Link to full project page.</strong></a>
-            </div>
-            </div>
-        </div>
-        <div class="col s12 m6 l4">
-            <div class="card orange">
-            <div class="card-image">
-                <img src="{% static "main/img/profile.jpg" %}" alt="Rick">
-                <span style="color:black" class="card-title"><strong>Rick City Beach</strong></span>
-            </div>
-            <div style="color:white" class="card-content">
-                <p>A brief description of this project. Enough to make it interestiong, but not enough to clutter the card.</p>
-            </div>
-            <div class="card-action">
-                <a style="color:white" href="#"><strong>Link to full project page.</strong></a>
+                {% if project.githubLink != None %}
+                <a style="color:white" href="#">Link to full project page.</a>
+                {% else %}
+                <a style="color:black" href="#">Link to full project page.</a>
+                {% endif %}
             </div>
             </div>
         </div>
-        <div class="col s12 m6 l4">
-            <div class="card orange">
-            <div class="card-image">
-                <img src="{% static "main/img/profile.jpg" %}" alt="Rick">
-                <span style="color:black" class="card-title"><strong>Rick City Beach</strong></span>
-            </div>
-            <div style="color:white" class="card-content">
-                <p>A brief description of this project. Enough to make it interestiong, but not enough to clutter the card.</p>
-            </div>
-            <div class="card-action">
-                <a style="color:white" href="#"><strong>Link to full project page.</strong></a>
-            </div>
+        {% endfor %}
         </div>
     </div>
 {% endblock %}

@@ -23,8 +23,8 @@ class Project(models.Model):
                                 default=ProgramLanguage.Unspecified,
                                 max_length=50)
 
-    def __str__(self):
-        return self.title
+    # def __str__(self):
+    #     return self.title
 
 class ProjectImage(models.Model):
     title = models.CharField(max_length=200)

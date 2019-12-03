@@ -4,6 +4,7 @@ from .forms import ContactMeForm
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.contrib import messages
+from .models import Project, ProjectImage
 
 # Create your views here.
 def index(request):
@@ -12,9 +13,17 @@ def index(request):
                     context=None)
 
 def portfolio(request):
+    mainImages = {}
+    for image in ProjectImage.objects.all().filter(mainImage=True):
+        mainImages.update({image.linkedProject: image.image.url})
+    allProjects = {}
+    for project in Project.objects.all():
+        image = mainImages.get(project)
+        allProjects.update({project: image})
     return render(request,
                     "main/portfolio.html",
-                    context=None)
+                    context={"projects": allProjects,
+                            "defaultImage": r"main/img/profile.jpg"})
 
 def contact(request):
     if request.method == 'POST':
