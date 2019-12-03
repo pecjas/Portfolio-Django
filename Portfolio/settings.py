@@ -40,6 +40,8 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = secrets.emailHostUser
 EMAIL_HOST_PASSWORD = secrets.emailHostPassword
 
+MEDIA_ROOT = r"media/"
+
 # Application definition
 
 INSTALLED_APPS = [

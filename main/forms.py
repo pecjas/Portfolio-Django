@@ -7,7 +7,7 @@ class ContactMeForm(forms.Form):
     fromEmail = forms.EmailField(required="True", label="Your Email")
     subject = forms.CharField(required="True", label="Subject")
     #TODO: Increase size of message TextArea
-    message = forms.CharField(widget=forms.Textarea(attrs={'row':5, "cols":50}), required="True", label="Message")
+    message = forms.CharField(widget=forms.Textarea, required="True", label="Message")
 
 #region NewUserForm if needed
 # class NewUserForm(UserCreationForm):
