@@ -1,5 +1,52 @@
 {% extends "main/header.html" %}
 
 {% block content %}
-    <p>WELCOME HOME!</p>
+<div class="col s12 m7">
+    <h2 class="header">Jason Peck</h2>
+    <div class="card horizontal">
+        <div class="card-image">
+        <img src="static/main/img/profile.jpg">
+        </div>
+        <div class="card-stacked">
+        <div class="card-content">
+            <p>This is a place to hadd a cool introduction about myself. Then reference my resume details below.</p>
+        </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <ul class="collapsible popout">
+        <li>
+            <div class="collapsible-header"><i class="material-icons">work</i>Experience</div>
+                <div class="collapsible-body">
+                    <ul class="collection with-header">
+                        <li class="collection-header"><h4>Job 1</h4> <span style="color:gray">1/1/1111 - 2/2/2222</span></li>
+                        <li class="collection-item">Blah</li>
+                        <li class="collection-item">Blah</li>
+                        <li class="collection-item">Blah</li>
+                        <li class="collection-item">Blah</li>
+                    </ul>
+                    <ul class="collection with-header">
+                        <li class="collection-header"><h4>Job 2</h4> <span style="color:gray">1/1/1111 - 2/2/2222</span></li>
+                        <li class="collection-item">Blah</li>
+                        <li class="collection-item">Blah</li>
+                        <li class="collection-item">Blah</li>
+                        <li class="collection-item">Blah</li>
+                    </ul>
+            </div>
+        </li>
+        <li>
+            <div class="collapsible-header"><i class="material-icons">school</i>Education</div>
+            <div class="collapsible-body"><span>Lorem ipsum dolor sit amet.</span></div>
+        </li>
+        <li>
+            <div class="collapsible-header"><i class="material-icons">star</i>Skills</div>
+            <div class="collapsible-body"><span>Lorem ipsum dolor sit amet.</span></div>
+        </li>
+        <li>
+            <div class="collapsible-header"><i class="material-icons">people</i>Activities</div>
+            <div class="collapsible-body"><span>Lorem ipsum dolor sit amet.</span></div>
+        </li>
+    </ul>
+</div>
 {% endblock %}

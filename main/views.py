@@ -23,7 +23,7 @@ def portfolio(request):
     return render(request,
                     "main/portfolio.html",
                     context={"projects": allProjects,
-                            "defaultImage": r"main/img/profile.jpg"})
+                            "defaultImage": r"main/img/placeholder.png"})
 
 def contact(request):
     if request.method == 'POST':

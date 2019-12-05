@@ -4,11 +4,32 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 
 # Create your models here.
+
+class Job(models.Model):
+    employer = models.CharField(max_length=200)
+    startDate = models.DateField()
+    endDate = models.DateField(null=True, blank=True)
+    title = models.CharField(max_length=200)
+
+class JobDetail(models.Model):
+    relatedJob = models.ForeignKey(Job, on_delete=models.CASCADE)
+    content = models.TextField()
+
+class Education(models.Model):
+    graduationDate = models.DateField()
+    school = models.CharField(max_length=200)
+    degree = models.CharField(max_length=200)
+    GPA = models.DecimalField(max_digits=4, decimal_places=3)
+    additionalInfo = models.TextField()
+
+class Skill(models.Model):
+    skill = models.CharField(max_length=200)
+
 class Project(models.Model):
     title = models.CharField(max_length=200)
     briefDescription = models.CharField(max_length=500)
     content = models.TextField()
-    githubLink = models.SlugField(max_length=200, blank=True, null=True)
+    githubLink = models.URLField(max_length=200, blank=True, null=True)
     webURL = models.SlugField(max_length=200, blank=True, null=True)
 
     class ProgramLanguage(models.TextChoices):
