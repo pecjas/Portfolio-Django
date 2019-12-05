@@ -5,7 +5,7 @@
         {% csrf_token %}
         {{form.as_p}}
 
-        <button class="btn waves-effect waves-light" type="submit" name="action">Send
+        <button data-position="bottom" data-tooltip="Send email" class="btn tooltipped waves-effect waves-light" type="submit" name="action">Send
             <i class="material-icons right">send</i>
         </button>
     </form>

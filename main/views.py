@@ -53,3 +53,11 @@ def contact(request):
     return render(request, 
                 'main/contact.html', 
                 {'form': form})
+
+def project(request):
+    reqID = request.GET.get('id')
+    proj = Project.objects.all().filter(title=reqID).first()
+    return render(request,
+            'main/project.html',
+            context={"project": proj,
+                    "images": [img for img in ProjectImage.objects.all().filter(linkedProject=proj)]})

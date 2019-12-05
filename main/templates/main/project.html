@@ -1,0 +1,25 @@
+{% extends "main/header.html" %}
+
+{% block content %}
+<h2>{{project}}</h2>
+<p>Language: {{project.language}}</p>
+{% if project.githubLink != None %}
+<p>Github Link: {{project.githubLink}}</p>
+{% endif %}
+<p>Description: {{project.content}}</p>
+{% for image in images %}
+<div class="row">
+{% if forloop.counter0|divisibleby:"2" %}
+</div>
+<div class="row">
+{% endif %}
+<div class="col s12 m6 l6">
+<div class="card blue">
+    <div class="card-image">
+        <img class="materialboxed" src="{{image.image.url}}">
+    </div>
+</div>
+</div>
+{% endfor %}
+</div>
+{% endblock %}
