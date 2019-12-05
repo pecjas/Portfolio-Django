@@ -4,13 +4,18 @@ from .forms import ContactMeForm
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.contrib import messages
-from .models import Project, ProjectImage
+from .models import Project, ProjectImage, Job, JobDetail, Education, Skill
 
 # Create your views here.
 def index(request):
+    jobAndDetail = {}
+    for job in Job.objects.all():
+        jobAndDetail.update({job: [detail for detail in JobDetail.objects.all().filter(relatedJob=job)]})
     return render(request,
                     "main/home.html",
-                    context=None)
+                    context={"jobs": jobAndDetail,
+                    "education": Education.objects.all(),
+                    "skills": Skill.objects.all()})
 
 def portfolio(request):
     mainImages = {}

@@ -11,9 +11,15 @@ class Job(models.Model):
     endDate = models.DateField(null=True, blank=True)
     title = models.CharField(max_length=200)
 
+    def __str__(self):
+        return self.employer
+
 class JobDetail(models.Model):
     relatedJob = models.ForeignKey(Job, on_delete=models.CASCADE)
     content = models.TextField()
+
+    def __str__(self):
+        return f"({self.relatedJob.employer}) {self.content}"
 
 class Education(models.Model):
     graduationDate = models.DateField()
@@ -22,8 +28,14 @@ class Education(models.Model):
     GPA = models.DecimalField(max_digits=4, decimal_places=3)
     additionalInfo = models.TextField()
 
+    def __str__(self):
+        return self.school
+
 class Skill(models.Model):
     skill = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.skill
 
 class Project(models.Model):
     title = models.CharField(max_length=200)
