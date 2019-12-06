@@ -8,14 +8,21 @@
 </div>
 <div class="container">
 <div class="col s12 m7">
-    <h2 align="center" class="header">Jason Peck</h2>
-    <div class="card horizontal">
+    <div class="card horizontal dark-purple white-text">
         <div class="card-image">
         <img src="static/main/img/jasonpeck.png">
         </div>
         <div class="card-stacked">
         <div class="card-content">
             <p>This is a place to hadd a cool introduction about myself. Then reference my resume details below.</p>
+            <p>More Cool Stuff.</p>
+            <p>More Cool Stuff.</p>
+            <p>More Cool Stuff.</p>
+            <p>More Cool Stuff.</p>
+            <p>More Cool Stuff.</p>
+            <p>More Cool Stuff.</p>
+            <p>More Cool Stuff.</p>
+            <p>In my spare time, I volunteer with Doobert, a technologically driven animal rescue and transportation non-profit. By committing to small portions of a much larger overall rescue transportation, I am able to ensure abused and abandoned animals find a safe home</p>
         </div>
         </div>
     </div>
@@ -23,42 +30,38 @@
 <div class="row">
     <ul class="collapsible popout">
         <li>
-            <div class="collapsible-header"><i class="material-icons">work</i>Experience</div>
-                <div class="collapsible-body">
+            <div class="collapsible-header dark-purple white-text"><i class="material-icons">work</i>Experience</div>
+                <div class="collapsible-body dark-purple">
                     {% for job, detailList in jobs.items %}
                     <ul class="collection with-header">
-                        <li class="collection-header"><h4>{{job.title}}</h4><p style="font-size:large">{{job.employer}}</p><span style="color:gray">{{job.startDate}} - {% if job.endDate is none%}Present{% else %}{{job.endDate}}{% endif %}</span></li>
+                        <li class="collection-header dark-purple white-text hot-pink-border"><h4>{{job.title}}</h4><p style="font-size:large">{{job.employer}}</p><span class="grey-purple-text">{{job.startDate}} - {% if job.endDate is none%}Present{% else %}{{job.endDate}}{% endif %}</span></li>
                         {% for detail in detailList %}
-                        <li class="collection-item">{{detail.content}}</li>
+                        <li class="collection-item dark-purple white-text hot-pink-border">{{detail.content}}</li>
                         {% endfor %}
                     </ul>
                     {% endfor %}
             </div>
         </li>
         <li>
-            <div class="collapsible-header"><i class="material-icons">school</i>Education</div>
-            <div class="collapsible-body">
+            <div class="collapsible-header dark-purple white-text"><i class="material-icons">school</i>Education</div>
+            <div class="collapsible-body dark-purple">
                 {% for edu in education %}
                 <ul class="collection with-header">
-                    <li class="collection-header"><h4>{{edu.degree}}</h4><p style="font-size:large">{{edu.school}}</p><span style="color:gray">{{edu.graduationDate}}</span></li>
-                    <li class="collection-item">Overall GPA: {{edu.GPA}}/4.000<br/>{{edu.additionalInfo}}</li>
+                    <li class="collection-header dark-purple white-text hot-pink-border"><h4>{{edu.degree}}</h4><p style="font-size:large">{{edu.school}}</p><span class="grey-purple-text">{{edu.graduationDate}}</span></li>
+                    <li class="collection-item dark-purple white-text hot-pink-border">Overall GPA: {{edu.GPA}}/4.000<br/>{{edu.additionalInfo}}</li>
                 </ul>
                 {% endfor %}
             </div>
         </li>
         <li>
-            <div class="collapsible-header"><i class="material-icons">star</i>Skills</div>
-            <div class="collapsible-body">
+            <div class="collapsible-header dark-purple white-text"><i class="material-icons">star</i>Skills</div>
+            <div class="collapsible-body dark-purple">
                 <ul class="collection">
                         {% for skill in skills %}
-                        <li class="collection-item">{{skill}}</li>
+                        <li class="collection-item dark-purple white-text hot-pink-border">{{skill}}</li>
                         {% endfor %}
                 </ul>
             </div>
-        </li>
-        <li>
-            <div class="collapsible-header"><i class="material-icons">people</i>Activities</div>
-            <div class="collapsible-body"><span>In my spare time, I volunteer with Doobert, a technologically driven animal rescue and transportation non-profit. By committing to small portions of a much larger overall rescue transportation, I am able to ensure abused and abandoned animals find a safe home</span></div>
         </li>
     </ul>
 </div>

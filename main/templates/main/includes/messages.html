@@ -1,7 +1,7 @@
 {% if messages %}
     {% for message in messages %}
         {% if message.tags == 'success'%}
-            <script>M.toast({html: "{{message}}", classes: 'green rounded', displayLength:2000});</script>
+            <script>M.toast({html: "{{message}}", classes: 'hot-pink rounded', displayLength:2000});</script>
         {% elif message.tags == 'info'%}
             <script>M.toast({html: "{{message}}", classes: 'blue rounded', displayLength:2000});</script>
         {% elif message.tags == 'warning'%}

@@ -1,3 +1,44 @@
+/*#region Custom Colors */
+.hot-pink {
+  background-color: #D83F87 !important;}
+
+.hot-pink-text {
+  color: #D83F87 !important;}
+
+.hot-pink-border {
+  border-color: #D83F87 !important;}
+
+.dark-purple {
+  background-color: #2A1B3D !important;}
+
+.dark-purple-text {
+  color: #2A1B3D !important;}
+
+.dark-purple-border {
+  border-color: #2A1B3D !important;}
+
+.medium-purple {
+  background-color: #44318D !important;}
+
+.medium-purple-text {
+  color: #44318D !important;}
+
+.grey-purple {
+  background-color: #A4B3B6 !important;}
+
+.grey-purple-text {
+  color: #A4B3B6 !important;}
+
+.outline-text
+  {
+      color: black;
+      text-shadow:
+      -1px -1px 0 #000,
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+      1px 1px 0 #000;}
+/*#endregion */
+
 .materialize-red {
   background-color: #e51c23 !important; }
 
@@ -1614,8 +1655,12 @@ html {
   -ms-text-size-adjust: 100%;
   /* 2 */
   -webkit-text-size-adjust: 100%;
+  background: #022449; /* fallback color */
+  background: radial-gradient(#A4B3B6 0%, #A77ABA 110%);
+  background-repeat: no-repeat;
+  background-size: cover;
   /* 2 */ }
-
+/*#region */
 /* Sections
    ========================================================================== */
 /**
@@ -3129,10 +3174,10 @@ table span.badge {
         right: 100%; }
       .row .col.push-xl12 {
         left: 100%; } }
-
+/*#endregion */
 nav {
   color: #fff;
-  background-color: #ee6e73;
+  background-color: #44318D;
   width: 100%;
   height: 56px;
   line-height: 56px; }

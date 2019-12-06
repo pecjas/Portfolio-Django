@@ -3,11 +3,11 @@ from django import forms
 from django.contrib.auth.models import User
 
 class ContactMeForm(forms.Form):
-    name = forms.CharField(max_length=200, required="True", label="Your Name")
-    fromEmail = forms.EmailField(required="True", label="Your Email")
-    subject = forms.CharField(required="True", label="Subject")
+    name = forms.CharField(max_length=200, widget=forms.TextInput(attrs={'class': 'dark-purple-border white-text'}), required="True", label="Your Name")
+    fromEmail = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'dark-purple-border white-text'}), required="True", label="Your Email")
+    subject = forms.CharField(widget=forms.TextInput(attrs={'class': 'dark-purple-border white-text'}), required="True", label="Subject")
     #TODO: Increase size of message TextArea
-    message = forms.CharField(widget=forms.Textarea, required="True", label="Message")
+    message = forms.CharField(widget=forms.Textarea(attrs={'class': 'dark-purple-border white-text'}), required="True", label="Message")
 
 #region NewUserForm if needed
 # class NewUserForm(UserCreationForm):
