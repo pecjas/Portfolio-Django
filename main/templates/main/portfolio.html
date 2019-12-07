@@ -23,7 +23,7 @@
             </div>
             <div class="card-content white-text">
                 <span class="card-title"><strong>{{project.title}}</strong></span>
-                <p><strong>Language: </strong>{{project.language}}</p>
+                <p><strong>Language: </strong>{% for lang in project.language %}{{lang}}{% endfor %}</p>
                 <p><strong>Description: </strong>{{project.briefDescription}}</p>
             </div>
             <div class="card-action">

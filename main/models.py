@@ -42,7 +42,6 @@ class Project(models.Model):
     briefDescription = models.CharField(max_length=500)
     content = models.TextField()
     githubLink = models.URLField(max_length=200, blank=True, null=True)
-    webURL = models.SlugField(max_length=200, blank=True, null=True)
 
     class ProgramLanguage(models.TextChoices):
         Python = 'Python'
@@ -52,8 +51,7 @@ class Project(models.Model):
         Mumps = 'Mumps'
         Unspecified = 'Unspecified'
 
-    language = models.CharField(choices=ProgramLanguage.choices,
-                                default=ProgramLanguage.Unspecified,
+    language = models.CharField(default=ProgramLanguage.Unspecified,
                                 max_length=50)
 
     def __str__(self):
