@@ -13,7 +13,7 @@
 </div>
 <div class="row">
 {% endif %}
-<div class="col s12 m6 l6">
+<div class="col {% if images|length > 1 %}s12 m6 l6{% endif %}">
 <div class="card blue">
     <div class="card-image">
         <img class="materialboxed" src="{{image.image.url}}">
