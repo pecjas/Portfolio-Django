@@ -29,14 +29,16 @@
 .grey-purple-text {
   color: #A4B3B6 !important;}
 
-.outline-text
-  {
+.outline-text {
       color: black;
       text-shadow:
       -1px -1px 0 #000,
       1px -1px 0 #000,
       -1px 1px 0 #000,
       1px 1px 0 #000;}
+
+.fixed-table {
+  table-layout: fixed !important;}
 /*#endregion */
 
 .materialize-red {

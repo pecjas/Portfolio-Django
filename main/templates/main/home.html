@@ -14,7 +14,14 @@
         </div>
         <div class="card-stacked">
         <div class="card-content">
-            <p>This is a place to hadd a cool introduction about myself. Then reference my resume details below.</p>
+            <p>This is a place to add a cool introduction about myself. Then reference my resume details below.
+                More Cool Stuff.
+                More Cool Stuff.
+                More Cool Stuff.
+                More Cool Stuff.
+                More Cool Stuff.
+                More Cool Stuff.
+            </p>
             <p>More Cool Stuff.</p>
             <p>More Cool Stuff.</p>
             <p>More Cool Stuff.</p>
@@ -56,11 +63,15 @@
         <li>
             <div class="collapsible-header dark-purple white-text"><i class="material-icons">star</i>Skills</div>
             <div class="collapsible-body dark-purple">
-                <ul class="collection">
-                        {% for skill in skills %}
-                        <li class="collection-item dark-purple white-text hot-pink-border">{{skill}}</li>
-                        {% endfor %}
-                </ul>
+                <table class="dark-purple white-text fixed-table">
+                    {% for skill in skills %}
+                    {% if forloop.counter0|divisibleby:"2" %}
+                    <tr class="hot-pink-border">
+                    {% endif %}
+                        <td class="center-align">{{skill}}
+                    {% endfor %}
+                    {% if not skills|length|divisibleby:"2" %}<td>{% endif %}
+                </table>
             </div>
         </li>
     </ul>
