@@ -2,36 +2,36 @@
 {% load static %}
 
 {% block content %}
+<div class="row">
+    {% for project, image in projects.items %}
+    {% if forloop.counter0|divisibleby:"3" %}
+    </div>
     <div class="row">
-        {% for project, image in projects.items %}
-        {% if forloop.counter0|divisibleby:"3" %}
-        </div>
-        <div class="row">
+    {% endif %}
+    <div class="col s12 m6 l4">
+        {% if project.githubLink != None %}
+            <div class="card hot-pink hoverable">
+        {% else %}
+            <div class="card dark-purple hoverable">
         {% endif %}
-        <div class="col s12 m6 l4">
-            {% if project.githubLink != None %}
-                <div class="card hot-pink hoverable">
+        <div class="card-image">
+            {% if image == None %}
+                <img src="{% static defaultImage %}">
             {% else %}
-                <div class="card dark-purple hoverable">
+                <img src="{{ image }}">
             {% endif %}
-            <div class="card-image">
-                {% if image == None %}
-                    <img src="{% static defaultImage %}">
-                {% else %}
-                    <img src="{{ image }}">
-                {% endif %}
-            </div>
-            <div class="card-content white-text">
-                <span class="card-title"><strong>{{project.title}}</strong></span>
-                <p><strong>Language: </strong>{% for lang in project.language %}{{lang}}{% endfor %}</p>
-                <p><strong>Description: </strong>{{project.briefDescription}}</p>
-            </div>
-            <div class="card-action">
-                <a style="color:white" href="/project/?id={{project}}">Link to full project page.</a>
-            </div>
-            </div>
         </div>
-        {% endfor %}
+        <div class="card-content white-text">
+            <span class="card-title"><strong>{{project.title}}</strong></span>
+            <p><strong>Language: </strong>{% for lang in project.language %}{{lang}}{% endfor %}</p>
+            <p><strong>Description: </strong>{{project.briefDescription}}</p>
+        </div>
+        <div class="card-action">
+            <a style="color:white" href="/project/?id={{project}}">Link to full project page.</a>
+        </div>
         </div>
     </div>
+    {% endfor %}
+    </div>
+</div>
 {% endblock %}
