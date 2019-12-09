@@ -2,11 +2,11 @@
 
 {% block content %}
 <h2 class="center-align dark-purple-text">{{project}}</h2>
-<p><strong style="font-size: large;" class="dark-purple-text">Language: </strong><span class="white-text">{{project.language}}</span></p>
+<div class="dark-purple-text"><strong style="font-size: large;">Language: </strong><span>{{project.language}}</span></div>
 {% if project.githubLink != None %}
-<p><strong style="font-size:large;" class="dark-purple-text">Github Link: </strong><a class="white-text" href="{{project.githubLink}}">{{project.githubLink}}</a></p>
+<div class="dark-purple-text"><strong style="font-size:large;">Github Link: </strong><a class="dark-purple-text" href="{{project.githubLink}}">{{project.githubLink}}</a></div>
 {% endif %}
-<p><strong style="font-size: large;" class="dark-purple-text">Description: </strong><span class="white-text">{{project.content}}</span></p>
+<div class="dark-purple-text"><strong style="font-size: large;">Description: </strong><blockquote class="dark-purple-text">{{ project.content|linebreaks }}</blockquote></div>
 {% for image in images %}
 <div class="row">
 {% if forloop.counter0|divisibleby:"2" %}

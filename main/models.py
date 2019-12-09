@@ -49,6 +49,8 @@ class Project(models.Model):
         SQL = 'SQL'
         PowerShell = 'PowerShell'
         Mumps = 'Mumps'
+        HTML = "HTML"
+        CSS = "CSS"
         Unspecified = 'Unspecified'
 
     language = models.CharField(default=ProgramLanguage.Unspecified,
@@ -71,7 +73,7 @@ class ProjectImage(models.Model):
         ]
 
     def __str__(self):
-        return self.title
+        return f"({self.linkedProject}) {self.title}"
 
 @receiver(post_delete, sender=ProjectImage)
 def submission_delete(sender, instance, **kwargs):

@@ -15,7 +15,7 @@ def index(request):
                     "main/home.html",
                     context={"jobs": jobAndDetail,
                     "education": Education.objects.all(),
-                    "skills": Skill.objects.all()})
+                    "skills": Skill.objects.all().order_by('skill')})
 
 def portfolio(request):
     mainImages = {}
