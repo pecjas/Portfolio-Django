@@ -1679,9 +1679,9 @@ html {
   /* 2 */
   -webkit-text-size-adjust: 100%;
   background: #022449; /* fallback color */
-  background: radial-gradient(#A4B3B6 0%, #A77ABA 110%);
+  background: linear-gradient(to right,#A77ABA -20%,#A4B3B6 50%,#A77ABA 120%);
   background-attachment: fixed;
-  background-repeat: no-repeat;
+  background-repeat: repeat-y;
   background-size: cover;
   /* 2 */ }
 /*#region */
