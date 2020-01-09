@@ -61,7 +61,9 @@ class Project(models.Model):
 
 class ProjectImage(models.Model):
     title = models.CharField(max_length=200)
-    image = models.ImageField(upload_to='ProjectImage')
+    height = models.PositiveIntegerField(default=0)
+    width = models.PositiveIntegerField(default=0)
+    image = models.ImageField(upload_to='ProjectImage', height_field='height', width_field='width')
     linkedProject = models.ForeignKey(Project, null=True, related_name='images', on_delete=models.SET_NULL)
     mainImage = models.BooleanField(default=False)
         
