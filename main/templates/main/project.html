@@ -7,6 +7,12 @@
 <div class="dark-purple-text"><strong style="font-size:large;">Github Link: </strong><a class="dark-purple-text" href="{{project.githubLink}}">{{project.githubLink}}</a></div>
 {% endif %}
 <div class="dark-purple-text"><strong style="font-size: large;">Description: </strong><blockquote class="dark-purple-text">{{ project.content|linebreaks }}</blockquote></div>
+{% if project.demoVideo != None %}
+<video class="responsive-video" controls autoplay loop muted>
+    <source src="{{ project.demoVideo.url }}" type="video/mp4">
+        Your browser does not support the video tag.
+</video>
+{% endif %}
 {% for image in images %}
 <div class="row">
 {% if forloop.counter0|divisibleby:"2" %}
