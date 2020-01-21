@@ -2,6 +2,9 @@
 .hot-pink {
   background-color: #D83F87 !important;}
 
+.hot-pink.darken {
+  background-color: #c03375 !important;}
+
 .hot-pink-text {
   color: #D83F87 !important;}
 
@@ -11,6 +14,9 @@
 .dark-purple {
   background-color: #2A1B3D !important;}
 
+.dark-purple.darken {
+  background-color: #1c1129 !important;}
+
 .dark-purple-text {
   color: #2A1B3D !important;}
 
@@ -19,6 +25,9 @@
 
 .medium-purple {
   background-color: #44318D !important;}
+
+.medium-purple.darken {
+  background-color: #302269 !important;}
 
 .medium-purple-text {
   color: #44318D !important;}

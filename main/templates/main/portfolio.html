@@ -4,36 +4,41 @@
 {% block content %}
 <div class="row">
     {% for project, image in projects.items %}
-    {% if forloop.counter0|divisibleby:"3" %}
-    </div>
-    <div class="row">
-    {% endif %}
     <div class="col s12 m6 l4">
         {% if project.githubLink != None %}
-            <div class="card hot-pink hoverable">
+        <div class="card hot-pink hoverable sticky-action">
+            <div class="card-image valign-wrapper hot-pink darken" style="height: 280px">
         {% else %}
-            <div class="card dark-purple hoverable">
+        <div class="card dark-purple hoverable sticky-action">
+            <div class="card-image valign-wrapper dark-purple darken" style="height: 280px">
         {% endif %}
-        <a href="/project/?id={{project}}">
-            <div class="card-image">
-                {% if image == None %}
-                    <img src="{% static defaultImage %}">
-                {% else %}
-                    <img src="{{ image }}">
-                {% endif %}
+        {% if image == None %}
+                <img src="{% static defaultImage %}" style="max-height: 100%">
             </div>
+        {% else %}
+                <img src="{{ image }}" style="max-height: 100%">
+            </div>
+        {% endif %}
             <div class="card-content white-text">
-                <span class="card-title"><strong>{{project.title}}</strong></span>
-                <p><strong>Language: </strong>{% for lang in project.language %}{{lang}}{% endfor %}</p>
-                <p><strong>Description: </strong>{{project.briefDescription}}</p>
+                <div class="card-title"><strong>{{project.title}}</strong></div>
+                <div style="padding-bottom: 4px;">
+                    <span class="activator"><strong class="activator">Brief Description</strong><i class="material-icons right">expand_less</i></span>
+                </div>
+                <p style="padding-bottom: 4px;"><strong>Language: </strong>{% for lang in project.language %}{{lang}}{% endfor %}</p>  
+                <div class="card-action center-align" style="max-height: 2%;">
+                    <a style="color:white; max-height: 2%;" href="/project/?id={{project}}">View Full Page</a>
+                </div>
             </div>
-        </a>
-        <div class="card-action">
-            <a style="color:white" href="/project/?id={{project}}">Link to full project page.</a>
-        </div>
+            {% if project.githubLink != None %}
+            <div class="card-reveal hot-pink white-text">
+            {% else %}
+            <div class="card-reveal dark-purple white-text">
+            {% endif %}
+                <span class="card-title">{{project.title}}<i class="material-icons right">expand_more</i></span>
+                <p>{{project.briefDescription}}</p>
+            </div>
         </div>
     </div>
     {% endfor %}
-    </div>
 </div>
 {% endblock %}
