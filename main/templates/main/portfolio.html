@@ -13,18 +13,18 @@
             <div class="card-image valign-wrapper dark-purple darken" style="height: 280px">
         {% endif %}
         {% if image == None %}
-                <img src="{% static defaultImage %}" style="max-height: 100%">
+                <img class="activator" src="{% static defaultImage %}" style="max-height: 100%">
             </div>
         {% else %}
-                <img src="{{ image }}" style="max-height: 100%">
+                <img class="activator" src="{{ image }}" style="max-height: 100%">
             </div>
         {% endif %}
-            <div class="card-content white-text">
-                <div class="card-title"><strong>{{project.title}}</strong></div>
-                <div style="padding-bottom: 4px;">
+            <div class="card-content white-text activator">
+                <div class="card-title activator"><strong class="activator">{{project.title}}</strong></div>
+                <div class="activator" style="padding-bottom: 4px;">
                     <span class="activator"><strong class="activator">Brief Description</strong><i class="material-icons right">expand_less</i></span>
                 </div>
-                <p style="padding-bottom: 4px;"><strong>Language: </strong>{% for lang in project.language %}{{lang}}{% endfor %}</p>  
+                <p style="padding-bottom: 4px;" class="activator"><strong class="activator">Language: </strong>{% for lang in project.language %}{{lang}}{% endfor %}</p>  
                 <div class="card-action center-align" style="max-height: 2%;">
                     <a style="color:white; max-height: 2%;" href="/project/?id={{project}}">View Full Page</a>
                 </div>

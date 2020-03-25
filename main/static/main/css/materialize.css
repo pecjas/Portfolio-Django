@@ -3502,6 +3502,7 @@ small {
   background-color: #fff; }
 
 .card {
+  cursor: pointer;
   position: relative;
   margin: 0.5rem 0 1rem 0;
   background-color: #fff;
