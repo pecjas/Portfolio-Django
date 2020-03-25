@@ -3,8 +3,12 @@
 
 {% block content %}
 </div>
-<div class="parallax-container s12 m6 l4 hide-on-med-and-down">
-        <div class="parallax"><img src="static/main/img/parallax.png"></div>
+<div class="carousel carousel-slider no-autoinit">
+        <div class="carousel-item" style="height: 100%;"><img src="static/main/img/Jason.png"></div>
+        <div class="carousel-item" style="height: 100%;"><img src="static/main/img/Developer.png"></div>
+</div>
+<div class="container">
+    <br>
 </div>
 <div class="container">
 <div class="col s12 m7">
@@ -65,4 +69,25 @@
         </li>
     </ul>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var carouselSlider = document.querySelectorAll('.carousel');
+    var options = {
+        fullWidth: true,
+        duration: 75,
+        padding: -200,
+    }
+
+    var instances = M.Carousel.init(carouselSlider, options);
+
+    setInterval(nextCarouselItem, 3000);
+
+    function nextCarouselItem() {
+      var elem = document.querySelector('.carousel');
+      var el = M.Carousel.getInstance(elem);
+
+      el.next();
+  }
+  });
+</script>
 {% endblock %}
