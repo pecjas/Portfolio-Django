@@ -39,9 +39,14 @@ class Project(models.Model):
     title = models.CharField(max_length=200)
     briefDescription = models.CharField(max_length=500, verbose_name="Brief Description")
     content = models.TextField()
+
     githubLink = models.URLField(max_length=200, blank=True, null=True, verbose_name="Github Link")
-    demoVideo = models.FileField(upload_to="demoVideo", verbose_name="Demo Video",
-                                blank=True, null=True)
+
+    demoVideo = models.FileField(
+        upload_to="demoVideo",
+        verbose_name="Demo Video",
+        blank=True,
+        null=True)
 
     class ProgramLanguage(models.TextChoices):
         Python = 'Python'
@@ -61,17 +66,21 @@ class Project(models.Model):
 
 class ProjectImage(models.Model):
     title = models.CharField(max_length=200)
+
     height = models.PositiveIntegerField(default=0)
     width = models.PositiveIntegerField(default=0)
+
     image = models.ImageField(upload_to='ProjectImage', height_field='height', width_field='width')
-    linkedProject = models.ForeignKey(Project, null=True, related_name='images', on_delete=models.SET_NULL)
     mainImage = models.BooleanField(default=False, verbose_name="Main Image")
-        
+
+    linkedProject = models.ForeignKey(Project, null=True, related_name='images', on_delete=models.SET_NULL)
+
     class Meta:
         constraints = [
-            models.constraints.UniqueConstraint(fields=['linkedProject'],
-                                    name='unique_main_image',
-                                    condition=Q(mainImage=True))
+            models.constraints.UniqueConstraint(
+                fields=['linkedProject'],
+                name='unique_main_image',
+                condition=Q(mainImage=True))
         ]
 
     def __str__(self):
@@ -82,5 +91,6 @@ class ProjectImage(models.Model):
 def submission_delete(sender, instance, **kwargs):
     if sender == ProjectImage:
         instance.image.delete(False)
+
     elif sender == Project:
         instance.demoVideo.delete(False)

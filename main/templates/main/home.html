@@ -4,8 +4,8 @@
 {% block content %}
 </div>
 <div class="carousel carousel-slider no-autoinit">
-        <div class="carousel-item" style="height: 100%;"><img src="static/main/img/Jason.png"></div>
-        <div class="carousel-item" style="height: 100%;"><img src="static/main/img/Developer.png"></div>
+        <div class="carousel-item"><img src="static/main/img/Jason.png"></div>
+        <div class="carousel-item"><img src="static/main/img/Developer.png"></div>
 </div>
 <div class="container">
     <br>
@@ -29,7 +29,7 @@
 </div>
 <div class="row">
     <ul class="collapsible popout">
-        <li>
+        <li class="active">
             <div class="collapsible-header dark-purple white-text"><i class="material-icons">work</i>Experience</div>
                 <div class="collapsible-body dark-purple">
                     {% for job, detailList in jobs.items %}
@@ -75,7 +75,6 @@
     var options = {
         fullWidth: true,
         duration: 75,
-        padding: -200,
     }
 
     var instances = M.Carousel.init(carouselSlider, options);

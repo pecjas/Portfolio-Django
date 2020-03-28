@@ -21,7 +21,7 @@
 </div>
 <div class="row">
 {% endif %}
-<div class="col centered-col{% if images|length > 1 %} s12 m6 l6{% endif %}">
+<div class="col {% if images|length > 1 %} s12 m6 l6{% endif %}">
 <div class="card">
     <div class="card-image">
         <img class="materialboxed" src="{{image.image.url}}">
