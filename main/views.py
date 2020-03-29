@@ -60,13 +60,17 @@ def contact(request):
     return render(
         request,
         'main/contact.html',
-        {'form': form})
+        context={
+            'form': form,
+            "google_recaptcha_site_key": settings.GOOGLE_RECAPTCHA_SITE_KEY})
 
 def _get_contact_post_form(request):
     form = ContactMeForm(request.POST)
 
     if form.is_valid():
         form = _contact_post(request, form)
+    
+    return form
 
 def _contact_post(request, form):
     if is_recaptcha_successful(request):

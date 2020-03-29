@@ -1,29 +1,45 @@
 import os
-import importlib.util
-spec = importlib.util.spec_from_file_location("portfolioSecrets", r"C:\Users\pecja\etc\SecretKeys\portfolioSecrets.py")
-module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
-secrets = module.get_secrets()
+import environ
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SETTINGS_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(SETTINGS_DIRECTORY) #Base is directory above settings.py
 
-SECRET_KEY = secrets.key
-GOOGLE_RECAPTCHA_SECRET_KEY = secrets.googleRecaptchaKey
+env = environ.Env(
+    ALLOWED_HOSTS=(list, ['127.0.0.1:8000']),
+    DEBUG=(bool, False),
+    EMAIL_HOST=str,
+    EMAIL_HOST_PASSWORD=str,
+    EMAIL_HOST_USER=str,
+    EMAIL_PORT=int,
+    GOOGLE_RECAPTCHA_SECRET_KEY=str,
+    GOOGLE_RECAPTCHA_SITE_KEY=str,
+    MEDIA_ROOT=str,
+    SECRET_KEY=str,
+)
 
-DEBUG = True
+env_file = os.path.join(BASE_DIR, '.env')
+print(env_file)
+print(os.getpid())
+environ.Env.read_env(env_file)
 
-ALLOWED_HOSTS = []
+SECRET_KEY = env('SECRET_KEY')
+GOOGLE_RECAPTCHA_SECRET_KEY = env('GOOGLE_RECAPTCHA_SECRET_KEY')
+GOOGLE_RECAPTCHA_SITE_KEY = env('GOOGLE_RECAPTCHA_SITE_KEY')
+
+DEBUG = env('DEBUG')
+
+ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
 # Email setup
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = env('EMAIL_HOST')
 EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_HOST_USER = secrets.emailHostUser
-EMAIL_HOST_PASSWORD = secrets.emailHostPassword
+EMAIL_PORT = env('EMAIL_PORT')
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 
-MEDIA_ROOT = r"media/"
-MEDIA_URL = "/media/"
+MEDIA_ROOT = env('MEDIA_ROOT')
+MEDIA_URL = '/media/'
 
 # Application definition
 
@@ -101,3 +117,5 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+
+STATIC_ROOT = f'{BASE_DIR}/static'

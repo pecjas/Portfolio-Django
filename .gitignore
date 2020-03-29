@@ -1,4 +1,6 @@
 *.pyc
 *.sqlite3
+*.env
 /media/
 /main/migrations/
+/env
