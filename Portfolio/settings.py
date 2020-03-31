@@ -1,29 +1,31 @@
 import os
 import importlib.util
-spec = importlib.util.spec_from_file_location("portfolioSecrets", r"C:\Users\pecja\etc\SecretKeys\portfolioSecrets.py")
+
+SETTINGS_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(SETTINGS_DIRECTORY) #Base is directory above settings.py
+
+spec = importlib.util.spec_from_file_location("env", fr"{BASE_DIR}\env.py")
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
-secrets = module.get_secrets()
+env = module.get_env_settings()
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SECRET_KEY = env.secret_key
+GOOGLE_RECAPTCHA_SECRET_KEY = env.google_recaptcha_secret_key
+GOOGLE_RECAPTCHA_SITE_KEY = env.google_recaptcha_site_key
 
-SECRET_KEY = secrets.key
-GOOGLE_RECAPTCHA_SECRET_KEY = secrets.googleRecaptchaKey
-
-DEBUG = True
-
-ALLOWED_HOSTS = []
+DEBUG = env.debug
+ALLOWED_HOSTS = env.allowed_hosts
 
 # Email setup
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = env.email_host
 EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_HOST_USER = secrets.emailHostUser
-EMAIL_HOST_PASSWORD = secrets.emailHostPassword
+EMAIL_PORT = env.email_port
+EMAIL_HOST_USER = env.email_host_user
+EMAIL_HOST_PASSWORD = env.email_host_password
 
-MEDIA_ROOT = r"media/"
-MEDIA_URL = "/media/"
+MEDIA_ROOT = env.media_root
+MEDIA_URL = '/media/'
 
 # Application definition
 
@@ -101,3 +103,5 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+
+STATIC_ROOT = f'{BASE_DIR}/static'

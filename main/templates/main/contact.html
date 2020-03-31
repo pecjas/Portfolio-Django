@@ -8,7 +8,7 @@
         {{ field }}
         {% endfor %}
         <br></br>
-        <div class="g-recaptcha" data-sitekey="6LdI89EUAAAAAEC-ATRXnso7hRr-k5WslxoUeZjz" style="padding-bottom: 20px;"></div>
+        <div class="g-recaptcha" data-sitekey="{{ google_recaptcha_site_key }}" style="padding-bottom: 20px;"></div>
         <button data-position="bottom" data-tooltip="Send email" class="btn tooltipped waves-effect waves-light medium-purple grey-purple-text" type="submit" name="action">Send
             <i class="material-icons right">send</i>
         </button>
