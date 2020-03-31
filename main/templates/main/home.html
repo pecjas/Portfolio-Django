@@ -70,12 +70,12 @@
     </ul>
 </div>
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    var carouselSlider = document.querySelectorAll('.carousel');
-    var options = {
-        fullWidth: true,
-        duration: 75,
-    }
+    $(document).ready(function() {
+        var carouselSlider = document.querySelectorAll('.carousel');
+        var options = {
+            fullWidth: true,
+            duration: 75,
+        }
 
     var instances = M.Carousel.init(carouselSlider, options);
 
@@ -87,6 +87,6 @@
 
       el.next();
   }
-  });
+  })
 </script>
 {% endblock %}

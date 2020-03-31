@@ -4,7 +4,7 @@ import importlib.util
 SETTINGS_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SETTINGS_DIRECTORY) #Base is directory above settings.py
 
-spec = importlib.util.spec_from_file_location("env", fr"{BASE_DIR}\env.py")
+spec = importlib.util.spec_from_file_location("env", os.path.join(BASE_DIR, "env.py"))
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 env = module.get_env_settings()
