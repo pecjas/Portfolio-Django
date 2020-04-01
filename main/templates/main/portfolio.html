@@ -2,23 +2,23 @@
 {% load static %}
 
 {% block content %}
-<div class="filter-container center-align grey-purple">
+<div class="filter-container center-align">
     <div class="filter-title">
         Project Filters
     </div>
 
-    <a class='dropdown-trigger btn waves-effect waves-light medium-purple grey-purple-text' data-target='languageDropdown'>Language</a>
+    <a class='dropdown-trigger btn waves-effect waves-light medium-purple white-text' data-target='languageDropdown'>Language</a>
     <ul id='languageDropdown' class='dropdown-content'>
         {% for language, languageDisplay in language_choices.items %}
-        <li><a onclick="updateFilters('data-filter-lang','{{ language }}')" id="data-filter-lang-{{ language }}">{{ languageDisplay }}</a></li>
+        <li><a class="dark-purple-text" onclick="updateFilters('data-filter-lang','{{ language }}')" id="data-filter-lang-{{ language }}">{{ languageDisplay }}</a></li>
         <li class="divider" tabindex="-1"></li>
         {% endfor %}
     </ul>
 
-    <a class='dropdown-trigger btn waves-effect waves-light medium-purple grey-purple-text' data-target='projectDropdown'>Project Type</a>
+    <a class='dropdown-trigger btn waves-effect waves-light medium-purple white-text' data-target='projectDropdown'>Project Type</a>
     <ul id='projectDropdown' class='dropdown-content'>
         {% for type in data_filter_personal_status %}
-        <li><a onclick="updateFilters('data-filter-personal-status','{{ type }}')" id="data-filter-personal-status-{{ type }}">{{ type }}</a></li>
+        <li><a class="dark-purple-text" onclick="updateFilters('data-filter-personal-status','{{ type }}')" id="data-filter-personal-status-{{ type }}">{{ type }}</a></li>
         <li class="divider" tabindex="-1"></li>
         {% endfor %}
     </ul>
