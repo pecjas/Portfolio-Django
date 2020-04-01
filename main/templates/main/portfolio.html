@@ -2,9 +2,31 @@
 {% load static %}
 
 {% block content %}
-<div class="row">
-    {% for project, image in projects.items %}
-    <div class="col s12 m6 l4">
+<div class="filter-container center-align grey-purple">
+    <div class="filter-title">
+        Project Filters
+    </div>
+
+    <a class='dropdown-trigger btn waves-effect waves-light medium-purple grey-purple-text' data-target='languageDropdown'>Language</a>
+    <ul id='languageDropdown' class='dropdown-content'>
+        {% for language, languageDisplay in language_choices.items %}
+        <li><a onclick="updateFilters('data-filter-lang','{{ language }}')" id="data-filter-lang-{{ language }}">{{ languageDisplay }}</a></li>
+        <li class="divider" tabindex="-1"></li>
+        {% endfor %}
+    </ul>
+
+    <a class='dropdown-trigger btn waves-effect waves-light medium-purple grey-purple-text' data-target='projectDropdown'>Project Type</a>
+    <ul id='projectDropdown' class='dropdown-content'>
+        {% for type in data_filter_personal_status %}
+        <li><a onclick="updateFilters('data-filter-personal-status','{{ type }}')" id="data-filter-personal-status-{{ type }}">{{ type }}</a></li>
+        <li class="divider" tabindex="-1"></li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div class="row" id="cardContainer">
+    {% for project, projDetails in projects.items %}
+    <div class="col s12 m6 l4" data-filter-lang="{{ projDetails.filterLang }}" data-filter-personal-status="{{ projDetails.filterPersonalStatus }}">
         {% if project.githubLink != None %}
         <div class="card hot-pink hoverable sticky-action">
             <div class="card-image valign-wrapper hot-pink darken" style="height: 280px">
@@ -12,11 +34,11 @@
         <div class="card dark-purple hoverable sticky-action">
             <div class="card-image valign-wrapper dark-purple darken" style="height: 280px">
         {% endif %}
-        {% if image == None %}
+        {% if projDetails.image == None %}
                 <img class="activator" src="{% static defaultImage %}" style="max-height: 100%">
             </div>
         {% else %}
-                <img class="activator" src="{{ image }}" style="max-height: 100%">
+                <img class="activator" src="{{ projDetails.image }}" style="max-height: 100%">
             </div>
         {% endif %}
             <div class="card-content white-text activator">
@@ -41,4 +63,8 @@
     </div>
     {% endfor %}
 </div>
+{{ filterList|json_script:"available-filters" }}
+<script>    
+    initializeCardFilters(JSON.parse(document.getElementById('available-filters').textContent))
+</script>
 {% endblock %}

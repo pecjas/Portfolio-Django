@@ -1,4 +1,33 @@
 /*#region Custom */
+.filter-container {
+  width: 50%;
+  border: 1px solid #000000;
+  border-radius: 3px;
+  padding: 10px;
+  margin: auto;
+  box-shadow: 0 0 20px -5px rgba(0, 0, 0, 0.6);
+
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, 1fr);
+  
+  position: relative;
+  z-index: 10;
+}
+
+.filter-container .filter-title {
+  grid-row: 1;
+  grid-column: 1 / span 2;
+
+  font-size: 175%;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.dropdown-content .filtered {
+  background-color: rgb(125, 236, 97);
+}
+
 .hot-pink {
   background-color: #D83F87 !important;}
 
@@ -6088,7 +6117,7 @@ input[type=range]::-ms-thumb {
   transform-style: preserve-3d;
   transform-origin: 0% 50%; }
   .carousel.carousel-slider {
-    min-height: 165px;
+    min-height: 275px;
     top: 0;
     left: 0; }
     .carousel.carousel-slider .carousel-fixed-item {

@@ -42,6 +42,8 @@ class Project(models.Model):
 
     githubLink = models.URLField(max_length=200, blank=True, null=True, verbose_name="Github Link")
 
+    html_project = models.BooleanField(default=False, verbose_name="HTML Project")
+
     demoVideo = models.FileField(
         upload_to="demoVideo",
         verbose_name="Demo Video",
@@ -49,17 +51,19 @@ class Project(models.Model):
         null=True)
 
     class ProgramLanguage(models.TextChoices):
-        Python = 'Python'
         C_Sharp = 'C#'
-        SQL = 'SQL'
-        PowerShell = 'PowerShell'
-        Mumps = 'Mumps'
-        HTML = "HTML"
         CSS = "CSS"
+        HTML = "HTML"
+        JavaScript = 'JavaScript'
+        Mumps = 'Mumps'
+        PHP = 'PHP'
+        PowerShell = 'PowerShell'
+        Python = 'Python'
+        SQL = 'SQL'
         Unspecified = 'Unspecified'
 
     language = models.CharField(default=ProgramLanguage.Unspecified,
-                                max_length=50)
+                                max_length=200)
 
     def __str__(self):
         return self.title

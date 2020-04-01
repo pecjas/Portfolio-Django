@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib import messages
 from .models import Project, ProjectImage, Job, JobDetail, Education, Skill
 import requests
+import json
 
 def index(request):
     job_and_detail = {}
@@ -32,26 +33,69 @@ def portfolio(request):
 
     for project in Project.objects.all():
         image = main_images.get(project)
-        allProjects.update({project: image})
+
+        filter_lang = project.language
+        print(filter_lang)
+        filter_lang = filter_lang.split(', ')
+        filter_lang = ' '.join([Project.ProgramLanguage(lang).name for lang in filter_lang])
+        print(filter_lang)
+        print()
+
+        if project.githubLink != None:
+            filter_personal_status = 'Personal'
+        else:
+            filter_personal_status = 'Professional'
+
+        allProjects.update({project: {
+            'image': image,
+            'filterLang': filter_lang,
+            'filterPersonalStatus': filter_personal_status
+        }})
+
+    print(dir(Project.ProgramLanguage))
+    print(Project.ProgramLanguage.C_Sharp)
+
+    language_choices = {}
+    for lang in dir(Project.ProgramLanguage):
+        if lang.startswith('_'):
+            continue
+
+        language_choices.update({lang: Project.ProgramLanguage[lang]})
+
+    personal_choices = ['Personal', 'Professional']
+
+    filter_list_context = build_portfolio_context(language_choices, personal_choices)
+
 
     return render(
         request,
         "main/portfolio.html",
         context={
-            "projects": allProjects,
-            "defaultImage": r"main/img/placeholder.png"})
+            'projects': allProjects,
+            'defaultImage': r"main/img/placeholder.png",
+            "language_choices": language_choices,
+            'data_filter_personal_status': personal_choices,
+            'filterList': json.dumps(filter_list_context)
+        })
+
+def build_portfolio_context(language_choices, personal_choices):
+    return {
+            'data-filter-personal-status': ' '.join(personal_choices),
+            'data-filter-lang': ' '.join([lang for lang in language_choices.keys()])
+    }
+
 
 def project(request):
     request_id = request.GET.get('id')
     project = Project.objects.get(title=request_id)
 
-    # if project.html_project:
-    #     return render(
-                    # request,
-                    # 'main/project_html.html',
-                    # context={
-                    #     "project": project,
-                    #     "images": [img for img in ProjectImage.objects.all().filter(linkedProject=project)]})
+    if project.html_project:
+        return render(
+                    request,
+                    'main/project_html.html',
+                    context={
+                        "project": project,
+                        "images": [img for img in ProjectImage.objects.all().filter(linkedProject=project)]})
 
     return render(
         request,

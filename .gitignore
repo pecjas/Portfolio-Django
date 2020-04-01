@@ -6,3 +6,4 @@ env.py
 env/
 /media/
 /main/migrations/
+/static/
