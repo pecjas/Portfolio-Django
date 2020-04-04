@@ -2,11 +2,14 @@
 {% load static %}
 
 {% block content %}
+<div class="card div-fixed" id="legend">
+    <div class="box dark-purple div-fixed-item"></div><div class="div-fixed-item">Professional</div>
+    <div class="box hot-pink div-fixed-item"></div><div class="div-fixed-item">Personal</div>
+</div>
 <div class="filter-container center-align">
     <div class="filter-title">
         Project Filters
     </div>
-
     <a class='dropdown-trigger btn waves-effect waves-light medium-purple white-text' data-target='languageDropdown'>Language</a>
     <ul id='languageDropdown' class='dropdown-content'>
         {% for language, languageDisplay in language_choices.items %}
@@ -14,7 +17,6 @@
         <li class="divider" tabindex="-1"></li>
         {% endfor %}
     </ul>
-
     <a class='dropdown-trigger btn waves-effect waves-light medium-purple white-text' data-target='projectDropdown'>Project Type</a>
     <ul id='projectDropdown' class='dropdown-content'>
         {% for type in data_filter_personal_status %}
@@ -23,7 +25,7 @@
         {% endfor %}
     </ul>
 </div>
-
+<br>
 <div class="row" id="cardContainer">
     {% for project, projDetails in projects.items %}
     <div class="col s12 m6 l4" data-filter-lang="{{ projDetails.filterLang }}" data-filter-personal-status="{{ projDetails.filterPersonalStatus }}">
@@ -66,5 +68,6 @@
 {{ filterList|json_script:"available-filters" }}
 <script>    
     initializeCardFilters(JSON.parse(document.getElementById('available-filters').textContent))
+    initializeLegend();
 </script>
 {% endblock %}

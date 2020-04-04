@@ -7,7 +7,6 @@ var CACHED_SELECTION = []
 */
 function initializeCardFilters(filterList) {
     filterList = JSON.parse(filterList)
-    console.log(filterList);
     
     $(document).ready(getAllCards())
     initializeFilterStates(filterList)

@@ -35,11 +35,8 @@ def portfolio(request):
         image = main_images.get(project)
 
         filter_lang = project.language
-        print(filter_lang)
         filter_lang = filter_lang.split(', ')
         filter_lang = ' '.join([Project.ProgramLanguage(lang).name for lang in filter_lang])
-        print(filter_lang)
-        print()
 
         if project.githubLink != None:
             filter_personal_status = 'Personal'
@@ -51,9 +48,6 @@ def portfolio(request):
             'filterLang': filter_lang,
             'filterPersonalStatus': filter_personal_status
         }})
-
-    print(dir(Project.ProgramLanguage))
-    print(Project.ProgramLanguage.C_Sharp)
 
     language_choices = {}
     for lang in dir(Project.ProgramLanguage):

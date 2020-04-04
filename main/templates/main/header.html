@@ -18,18 +18,13 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://www.google.com/recaptcha/api.js"></script>
     <script src="{% static 'main/js/filterCards.js' %}"></script>
+    <script src="{% static 'main/js/portfolioLegend.js' %}"></script>
 </head>
 
 <body>
 
     {% include "main/includes/navbar.html" %}
     {% include "main/includes/messages.html" %}
-    {% if projects|length > 0 %}
-    <div class="card div-fixed">
-        <div class="box dark-purple div-fixed-item"></div><div class="div-fixed-item">Professional</div>
-        <div class="box hot-pink div-fixed-item"></div><div class="div-fixed-item">Personal</div>
-    </div>
-    {% endif %}
 
     <div class="container">
         <br>
