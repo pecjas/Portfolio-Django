@@ -5,29 +5,38 @@ from main.models import Project
 class ContactMeForm(forms.Form):
     name = forms.CharField(
         max_length=200,
-        widget=forms.TextInput(
-            attrs={'class': 'dark-purple-border white-text'}),
         required="True",
-        label="Your Name")
+        label="Name",
+        widget=forms.TextInput(
+            attrs={
+                'class': 'dark-purple-border white-text',
+                'placeholder': 'Your name'}))
 
     fromEmail = forms.EmailField(
-        widget=forms.EmailInput(
-            attrs={'class': 'dark-purple-border white-text'}),
         required="True",
-        label="Your Email")
+        label="Email",
+        widget=forms.EmailInput(
+            attrs={
+                'class': 'dark-purple-border white-text',
+                'placeholder': 'Your email'}))
 
     subject = forms.CharField(
+        required="True",
+        label="Subject",
         widget=forms.TextInput(
-            attrs={'class': 'dark-purple-border white-text'}),
-        required="True",
-        label="Subject")
+            attrs={
+                'class': 'dark-purple-border white-text',
+                'placeholder': 'Email subject'}))
 
-    #TODO: Increase size of message TextArea
     message = forms.CharField(
-        widget=forms.Textarea(
-            attrs={'class': 'dark-purple-border white-text'}),
         required="True",
-        label="Message")
+        label="Message",
+        widget=forms.Textarea(
+            attrs={
+                'class': 'dark-purple-border white-text',
+                'rows': 10,
+                'style': 'height: auto;',
+                'placeholder': 'Your message here'}))
 
 class ProjectForm(forms.ModelForm):
     language = forms.MultipleChoiceField(

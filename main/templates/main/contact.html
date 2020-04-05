@@ -1,16 +1,18 @@
 {% extends "main/header.html" %}
 
 {% block content %}
-    <form method="POST">
-        {% csrf_token %}
-        {% for field in form %}
-        <label class="dark-purple-text" style="font-size:medium; font-weight: 350;" for="{{ field.name }}">{{ field.label }}</label>
-        {{ field }}
-        {% endfor %}
-        <br></br>
-        <div class="g-recaptcha" data-sitekey="{{ google_recaptcha_site_key }}" style="padding-bottom: 20px;"></div>
-        <button data-position="bottom" data-tooltip="Send email" class="btn tooltipped waves-effect waves-light medium-purple grey-purple-text" type="submit" name="action">Send
-            <i class="material-icons right">send</i>
-        </button>
-    </form>
+<h6 class="center dark-purple-text">Have questions? Want to reach out to discuss a future project? Fill out the form below to send me an email.</h6>
+<br>
+<form method="POST">
+    {% csrf_token %}
+    {% for field in form %}
+    <label class="dark-purple-text" style="font-size:medium; font-weight: 400;" for="id_{{ field.name }}">{{ field.label }}</label>
+    {{ field }}
+    {% endfor %}
+    <br></br>
+    <div class="g-recaptcha" data-sitekey="{{ google_recaptcha_site_key }}" style="padding-bottom: 20px;"></div>
+    <button data-position="left" data-tooltip="Send email" class="btn tooltipped waves-effect waves-light medium-purple grey-purple-text" type="submit" name="action">Send
+        <i class="material-icons right">send</i>
+    </button>
+</form>
 {% endblock %}
