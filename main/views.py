@@ -11,7 +11,7 @@ import json
 def index(request):
     job_and_detail = {}
 
-    for job in Job.objects.all():
+    for job in Job.objects.all().order_by('-startDate'):
         job_and_detail.update(
             {job: [detail for detail in JobDetail.objects.all().filter(relatedJob=job)]})
 
