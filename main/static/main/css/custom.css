@@ -1,0 +1,249 @@
+/* Custom styles for jasonpeck.dev.
+
+   Loaded AFTER materialize.css, so a rule here with the same specificity as a
+   Materialize rule wins on source order. Previously this block lived at the top
+   of materialize.css, where it lost those ties and needed !important to be
+   heard; it also meant the vendor file could not be updated without reapplying
+   the patch by hand.
+
+   !important is still required where Materialize sets a property inline from
+   JavaScript, which is called out at each such rule. */
+
+.filter-container {
+  width: 50%;
+  background-color: #dfdfdf;
+  border: 1px solid #000000;
+  border-radius: 3px;
+  padding: 10px;
+  margin: auto;
+  box-shadow: 0 0 20px -5px rgba(0, 0, 0, 0.6);
+
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, 1fr);
+  
+  position: relative;
+  z-index: 10;
+}
+
+.filter-container .filter-title {
+  grid-row: 1;
+  grid-column: 1 / span 2;
+
+  font-size: 175%;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.dropdown-content .filtered {
+  background-color: rgb(160, 236, 141);
+}
+
+.hot-pink {
+  background-color: #D83F87 !important;}
+
+.hot-pink.darken {
+  background-color: #c03375 !important;}
+
+.hot-pink-text {
+  color: #D83F87 !important;}
+
+.hot-pink-border {
+  border-color: #D83F87 !important;}
+
+.dark-purple {
+  background-color: #2A1B3D !important;}
+
+.dark-purple.darken {
+  background-color: #1c1129 !important;}
+
+.dark-purple-text {
+  color: #2A1B3D !important;}
+
+.dark-purple-border {
+  border-color: #2A1B3D !important;}
+
+.medium-purple {
+  background-color: #44318D !important;}
+
+.medium-purple.darken {
+  background-color: #302269 !important;}
+
+.medium-purple-text {
+  color: #44318D !important;}
+
+.grey-purple {
+  background-color: #A4B3B6 !important;}
+
+.grey-purple-text {
+  color: #A4B3B6 !important;}
+
+.outline-text {
+      color: black;
+      text-shadow:
+      -1px -1px 0 #000,
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+      1px 1px 0 #000;}
+
+.fixed-table {
+  table-layout: fixed !important;}
+
+.div-fixed {
+  position: fixed !important;
+  right: 10px;
+  top: 65px;
+  padding-top: 10px;
+  padding-left: 10px;
+  margin-bottom: 0;
+  z-index: 997;
+  width: 150px;
+  border: 1px;}
+
+.div-fixed-item {
+  margin-bottom: 10px;
+  margin-right: 10px;}
+
+.box {
+  float: left;
+  height: 20px;
+  width: 20px;
+  clear: both}
+
+/* Below Materialize's large breakpoint there is no side margin to float the
+   legend into, so it sits inline above the filters rather than covering the
+   page heading. */
+@media only screen and (max-width: 992px) {
+  .div-fixed {
+    position: static !important;
+    width: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    margin-bottom: 16px;}
+
+  .div-fixed .box {
+    float: none;
+    clear: none;}
+
+  .div-fixed-item {
+    margin-bottom: 0;}
+}
+
+@media only screen and (max-width: 600px) {
+  /* A horizontal card splits a phone's width into two unreadably narrow
+     columns. Stack it: image centred on top, text full width underneath. */
+  .card.horizontal {
+    flex-direction: column;}
+
+  .card.horizontal .card-image {
+    max-width: 100%;
+    display: flex;
+    justify-content: center;
+    /* Matches .card-content's 24px padding, so the image sits the same
+       distance from the top of the card as it does from the text below. */
+    padding-top: 24px;}
+
+  .card.horizontal .card-image picture {
+    display: block;
+    max-width: 100%;}
+
+  .card.horizontal .card-image img {
+    width: auto;
+    max-width: 100%;
+    max-height: 320px;
+    border-radius: 2px 2px 0 0;}
+
+  .card.horizontal .card-stacked {
+    width: 100%;}
+
+  /* At 50% of a phone's width the filter buttons clip their own labels. */
+  .filter-container {
+    width: auto;
+    margin-left: 16px;
+    margin-right: 16px;}
+}
+
+.col.centered-col{
+  float: none !important;
+  margin-left: auto;
+  margin-right: auto;}
+
+/* Lets markup use a correct h1 > h2 > h3 outline without changing how it looks.
+   Apply to a heading tag that sits where a non-heading element used to. */
+.heading-reset {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;}
+
+.heading-inline {
+  display: inline;
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;}
+
+/* Matches Materialize's h4 metrics, so an h3 can take an h4's former place. */
+.heading-entry {
+  font-size: 2.28rem;
+  line-height: 110%;
+  font-weight: 400;
+  margin: 1.52rem 0 0.912rem 0;}
+
+/* Matches Materialize's h6 metrics, for lede text that was marked up as h6. */
+.lede {
+  font-size: 1.15rem;
+  line-height: 110%;
+  font-weight: 400;
+  margin: 0.7666666667rem 0 0.46rem 0;}
+
+/* The banner images are a fixed 2000x215. Materialize sizes the carousel from
+   the image height at init, which leaves a tall empty box once the viewport is
+   narrower than that measurement. Deriving the height from the aspect ratio
+   keeps the box exactly as tall as the artwork at every width. !important is
+   needed because Materialize writes its height inline. */
+.carousel.carousel-slider {
+  /* !important: Materialize writes this height inline from JS. */
+  height: auto !important;
+  min-height: 0;
+  aspect-ratio: 2000 / 215;}
+
+/* <picture> is inline by default; it has to fill the slide the way the bare
+   img used to, or the WebP sources change the layout. */
+.carousel.carousel-slider .carousel-item picture {
+  display: block;
+  width: 100%;
+  height: 100%;}
+
+.carousel.carousel-slider .carousel-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;}
+
+/* Keeps the section marked active open from first paint, rather than only once
+   Materialize's JS has initialised. Materialize sets an inline display when it
+   opens or closes a section, which wins over this rule. */
+.collapsible > li.active > .collapsible-body {
+  display: block;}
+
+/* Visible to screen readers only. */
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;}
+
+.form-errors {
+  margin: 0 0 8px 0;
+  padding: 0;
+  list-style: none;
+  color: #b00020;
+  font-weight: 500;}

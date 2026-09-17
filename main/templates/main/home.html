@@ -6,15 +6,34 @@
 
 <!-- Decorative name banner: the text it renders is already in the h1 above. -->
 <div class="carousel carousel-slider no-autoinit" aria-hidden="true">
-        <span class="carousel-item"><img src="{% static 'main/img/Jason.png' %}" alt=""></span>
-        <span class="carousel-item"><img src="{% static 'main/img/Developer.png' %}" alt=""></span>
+        <span class="carousel-item">
+            <picture>
+                <source type="image/webp" sizes="100vw"
+                        srcset="{% static 'main/img/Jason-800w.webp' %} 800w,
+                                {% static 'main/img/Jason-1200w.webp' %} 1200w,
+                                {% static 'main/img/Jason.webp' %} 2000w">
+                <img src="{% static 'main/img/Jason.png' %}" alt="" width="2000" height="215">
+            </picture>
+        </span>
+        <span class="carousel-item">
+            <picture>
+                <source type="image/webp" sizes="100vw"
+                        srcset="{% static 'main/img/Developer-800w.webp' %} 800w,
+                                {% static 'main/img/Developer-1200w.webp' %} 1200w,
+                                {% static 'main/img/Developer.webp' %} 2000w">
+                <img src="{% static 'main/img/Developer.png' %}" alt="" width="2000" height="215">
+            </picture>
+        </span>
 </div>
 <div class="container">
 <br>
 <div class="col s12 m7">
     <div class="card horizontal dark-purple white-text">
         <div class="card-image">
-        <img src="{% static 'main/img/jasonpeck.png' %}" alt="Portrait of Jason Peck">
+        <picture>
+            <source type="image/webp" srcset="{% static 'main/img/jasonpeck.webp' %}">
+            <img src="{% static 'main/img/jasonpeck.png' %}" alt="Portrait of Jason Peck" width="300" height="450">
+        </picture>
         </div>
         <div class="card-stacked">
         <div class="card-content valign-wrapper">
@@ -75,7 +94,7 @@
 
 {% block extra_body %}
 <script>
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function () {
         var carouselSlider = document.querySelectorAll('.carousel');
         var options = {
             fullWidth: true,
@@ -92,6 +111,6 @@
 
       el.next();
   }
-  })
+  });
 </script>
 {% endblock %}

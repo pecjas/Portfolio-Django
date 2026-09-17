@@ -132,29 +132,44 @@ Small, high-impact, low visual risk. Desktop appearance barely changes; mobile i
 
 ### Deployment notes for Phase 1
 
-Migrations are now tracked in git (`/main/migrations/` was removed from `.gitignore`). The app had a
-recorded migration history whose files no longer existed, so the local database needed repairing:
+Migrations are now tracked in git (`/main/migrations/` was removed from `.gitignore`).
 
-1. `main/migrations/0001_initial.py` was regenerated from the current models, minus the slug field.
-2. The stale `main` rows in `django_migrations` were deleted.
-3. `manage.py migrate main --fake-initial` marked 0001 applied without re-creating existing tables.
-4. `0002_project_slug.py` added the field, backfilled slugs, then applied the unique constraint.
+**Correction (2026-09-16):** an earlier version of this section prescribed deleting production's
+`django_migrations` rows and running `migrate --fake-initial`. That is *not* required, and the
+instruction has been withdrawn. It was tested against a rebuilt copy of production and a plain
+`migrate` is sufficient:
 
-**The production database on PythonAnywhere needs the same repair before `migrate` will work.** Back
-up `db.sqlite3` first, then run steps 2-4 there. Step 2 is:
-`DELETE FROM django_migrations WHERE app='main';`
+```bash
+python manage.py migrate
+```
 
-A follow-up fix landed the same day. The new markup depends on CSS classes added to
-`materialize.css` at an unchanged URL, so any browser holding a cached copy rendered the new HTML
-without the new rules: the screen-reader-only `h1` showed as a duplicate page title and the
-collapsible section headers rendered at their default `h2` size. Two changes address it:
+Why it works: production already has a migration record named `0001_initial`. The regenerated file
+carries that same name, so Django treats it as applied and skips it. The eight other orphaned
+records name files that no longer exist; Django builds its graph from the files on disk and ignores
+records it cannot match. `0002_project_slug` then applies for real, backfilling a slug for every
+existing project from its own title.
 
-- `main/templatetags/versioned_static.py` appends each static file's modification time as `?v=`,
-  so the URL changes whenever the file does. `header.html` uses it for the stylesheet and both
-  scripts. Without this, every returning visitor would have hit the same broken page after deploy.
-- `.collapsible > li.active > .collapsible-body { display: block; }` opens the default section from
-  first paint rather than only once Materialize's JS initialises. Materialize's inline styles still
-  win once a visitor clicks.
+Verified by simulation on a production-shaped database (tables without `slug`, the nine orphaned
+records, the real project rows): plain `migrate` applied `0002_project_slug` cleanly and backfilled
+8 of 8 projects.
+
+**Phase 1 does not need to ship on its own.** The same simulation, run against an untouched
+production copy with a second migration stacked on top, applied both in a single `migrate` — Phase 1
+and any later phase can deploy together. Migrations are ordered by their dependency chain, not by
+when they are deployed, so batching them changes nothing.
+
+One caveat worth knowing: Django decides `0001_initial` is applied from its *name*, and never checks
+that production's tables actually match what that file declares. If production's schema has drifted
+from the models, that difference would pass unnoticed. `makemigrations --check --dry-run` reports no
+changes locally, so models and migrations agree here. After deploying, confirm the same on the
+server:
+
+```bash
+python manage.py makemigrations --check --dry-run
+```
+
+"No changes detected" means the schema, models and migration files are consistent. Back up
+`db.sqlite3` before migrating regardless — `0002` rewrites every row in `main_project`.
 
 Note: adding a new `templatetags` package requires a server restart. Django's autoreloader does not
 pick up a newly created tag library, and templates using it raise `TemplateSyntaxError` until then.
@@ -186,14 +201,109 @@ after Materialize removes that constraint.
 
 ## Phase 2 — Dependency modernization
 
-- [ ] Django 4.0.6 → 5.2 LTS (review release notes for breaking changes)
-- [ ] Replace Universal Analytics with GA4, or switch to Plausible/Fathom
-- [ ] Extract custom CSS from `materialize.css:1-105` into its own `custom.css`
-- [ ] Convert photos to WebP/AVIF with `srcset` and correct `width`/`height`
-- [ ] Delete unreferenced `parallax.png` (4.1 MB) and `profile.jpg`
-- [ ] Add `loading="lazy"` to portfolio card images
-- [ ] Add `defer` to script tags; scope reCAPTCHA loading to `/contact` only
-- [ ] Fix the N+1 in `index()` with `prefetch_related`
+**Status: complete except the GA4 swap (2026-09-16).** 16 tests passing; verified at 375px and 1280px.
+
+- [x] Django 4.0.6 → 5.2.17 LTS
+- [ ] Replace Universal Analytics with GA4 — **needs a GA4 property from you, see below**
+- [x] Extract custom CSS from `materialize.css` into its own `custom.css`
+- [x] Convert photos to WebP with `srcset` and correct `width`/`height`
+- [x] Delete unreferenced `parallax.png` (4.1 MB) and `profile.jpg`
+- [x] Add `loading="lazy"` to portfolio card images
+- [x] Add `defer` to script tags; reCAPTCHA now also `async defer` and scoped to `/contact`
+- [x] Fix the N+1 in `index()` with `prefetch_related`
+- [x] Security settings carried over from Phase 1's leftovers
+
+### Django 5.2 upgrade
+
+Only one incompatibility existed in the code: `USE_L10N`, removed in Django 5.0. Localised
+formatting is unconditional now, so the setting was simply deleted.
+
+`MainConfig.default_auto_field` is pinned to `AutoField`, which silences the six `models.W042`
+warnings without a schema change. Switching to `BigAutoField` would rebuild every table for no
+benefit at this row count; revisit only if a table approaches 2 billion rows.
+
+After upgrading: `check` is clean, `makemigrations --check` reports no changes, all tests pass, and
+every page renders including the legacy `/project/?id=` redirect.
+
+### Images
+
+| File | Before (PNG) | After (WebP) | Saving |
+|---|---|---|---|
+| `Jason.png` | 447 KB | 9.6 KB @800w · 15.6 KB @1200w · 27.7 KB @2000w | 94-98% |
+| `Developer.png` | 499 KB | 10.9 KB @800w · 18.3 KB @1200w · 32.8 KB @2000w | 94-98% |
+| `jasonpeck.png` | 171 KB | 11.7 KB | 93% |
+
+The PNGs are kept as `<picture>` fallbacks and never fetched by a browser that supports WebP.
+Measured on the home page at 375px: **21 KB of images, down from roughly 1.1 MB**. Verified that a
+cold load on a 375px @2x phone selects the 800w variant.
+
+`width` and `height` are set on every image so the browser reserves space before the file arrives.
+Project detail images take theirs from the `ProjectImage.width` / `.height` model fields.
+
+Portfolio cards lazy-load from the fourth card onward — the first row stays eager so the largest
+visible image is not delayed.
+
+### Deferred scripts
+
+jQuery, Materialize and both page scripts now carry `defer`, and jQuery was reordered ahead of
+Materialize so Materialize's jQuery bridge is built. `defer` preserves execution order but moves it
+after parsing, so three inline initialisers that used to run mid-parse were wrapped in
+`DOMContentLoaded`: the `M.AutoInit()` call, the toast calls in `messages.html`, and the filter and
+legend setup in `portfolio.html`. The carousel's `$(document).ready(...)` became a plain
+`DOMContentLoaded` listener, since `$` is no longer defined when that script is parsed.
+
+Verified after the change: carousel and collapsible initialise, filters still narrow 8 projects to
+5, the legend still positions, and the console is clean.
+
+### Security settings
+
+`Portfolio/settings.py` now applies production-only hardening under `if not DEBUG:`. Django's
+`check --deploy` drops from 6 warnings to 3 in a simulated production run.
+
+`SECURE_PROXY_SSL_HEADER` is set alongside `SECURE_SSL_REDIRECT`. Without it, PythonAnywhere's proxy
+terminates TLS and Django sees plain HTTP on every request, producing an infinite redirect loop.
+
+`SECURE_HSTS_SECONDS` is deliberately **3600, not a year**. HSTS is remembered by each visitor's
+browser for the full duration and cannot be withdrawn, so a mistake is expensive. Raise it once
+HTTPS is confirmed stable in production.
+
+The three remaining warnings are deliberate:
+
+- `W005` HSTS `includeSubDomains` — off; there are no subdomains and enabling it adds risk.
+- `W021` HSTS preload — off; preload-list submission is effectively irreversible.
+- `W009` `SECRET_KEY` — **needs your action.** The key in `env.py` is under 50 characters. Generate a
+  new one and replace it in `env.py` on both machines. This logs out any active admin session, which
+  is the only consequence here:
+
+```bash
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+### Outstanding: the GA4 swap
+
+No code change is needed. `main/context_processors.py` injects whatever HTML sits in
+`env.google_analytics_head_info`, so switching analytics is purely an `env.py` edit.
+
+Your current value holds the Universal Analytics snippet for `UA-162877529-2`, a property that
+stopped collecting data in July 2023. To finish this item:
+
+1. Create a GA4 property at analytics.google.com and copy its Measurement ID (`G-XXXXXXXXXX`).
+2. Replace the value of `google_analytics_head_info` in `env.py` with the GA4 snippet Google
+   provides, substituting your own ID:
+
+```html
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
+```
+
+3. Do the same in `env.py` on PythonAnywhere.
+
+Worth doing before the Phase 3 redesign, so there is a baseline to compare against.
 
 ## Phase 3 — Visual redesign (Materialize removal)
 

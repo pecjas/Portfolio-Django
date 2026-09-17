@@ -95,6 +95,36 @@ class PageSmokeTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
+class QueryCountTests(TestCase):
+    """Guards against a query per row creeping back into the list views."""
+
+    @classmethod
+    def setUpTestData(cls):
+        for n in range(6):
+            job = Job.objects.create(
+                employer=f"Employer {n}",
+                title=f"Title {n}",
+                startDate=date(2020 + n % 5, 1, 1))
+
+            for d in range(4):
+                JobDetail.objects.create(relatedJob=job, content=f"Detail {n}-{d}")
+
+        for n in range(8):
+            Project.objects.create(
+                title=f"Project {n}",
+                briefDescription="x",
+                content="y",
+                language="Python")
+
+    def test_home_page_query_count_does_not_grow_with_jobs(self):
+        with self.assertNumQueries(4):
+            self.client.get(reverse("main:index"))
+
+    def test_portfolio_page_query_count_does_not_grow_with_projects(self):
+        with self.assertNumQueries(2):
+            self.client.get(reverse("main:portfolio"))
+
+
 class ProjectSlugTests(TestCase):
 
     def test_slug_is_generated_from_title(self):

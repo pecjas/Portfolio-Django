@@ -18,6 +18,24 @@ GOOGLE_ANALYTICS_HEAD_INFO = env.google_analytics_head_info
 DEBUG = env.debug
 ALLOWED_HOSTS = env.allowed_hosts
 
+if not DEBUG:
+    # PythonAnywhere terminates TLS at its proxy and forwards the original
+    # scheme in this header. Without it, SECURE_SSL_REDIRECT sees every request
+    # as plain HTTP and redirects forever.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # Deliberately one hour, not a year. A misconfiguration here is remembered
+    # by every visitor's browser for the full duration and cannot be called
+    # back, so this starts short. Raise it to 31536000 once HTTPS has been
+    # confirmed working in production for a while.
+    SECURE_HSTS_SECONDS = 3600
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
+
 # Email setup
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = env.email_host
@@ -100,8 +118,6 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
-
-USE_L10N = True
 
 USE_TZ = True
 

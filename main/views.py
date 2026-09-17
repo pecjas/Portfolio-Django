@@ -9,11 +9,11 @@ import requests
 import json
 
 def index(request):
-    job_and_detail = {}
+    # prefetch_related pulls every job's details in one extra query rather than
+    # one query per job.
+    jobs = Job.objects.order_by('-startDate').prefetch_related('jobdetail_set')
 
-    for job in Job.objects.all().order_by('-startDate'):
-        job_and_detail.update(
-            {job: [detail for detail in JobDetail.objects.all().filter(relatedJob=job)]})
+    job_and_detail = {job: list(job.jobdetail_set.all()) for job in jobs}
 
     return render(
         request,
@@ -28,7 +28,8 @@ def index(request):
 def portfolio(request):
     main_images = {}
 
-    for image in ProjectImage.objects.all().filter(mainImage=True):
+    # select_related avoids a query per image when reading image.linkedProject.
+    for image in ProjectImage.objects.filter(mainImage=True).select_related('linkedProject'):
         main_images.update({image.linkedProject: image.image.url})
 
     allProjects = {}

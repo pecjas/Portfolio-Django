@@ -39,10 +39,12 @@
             <div class="card-image valign-wrapper dark-purple darken" style="height: 280px">
         {% endif %}
         {% if projDetails.image == None %}
-                <img class="activator" src="{% static defaultImage %}" style="max-height: 100%" alt="">
+                <img class="activator" src="{% static defaultImage %}" style="max-height: 100%" alt=""
+                     decoding="async"{% if forloop.counter > 3 %} loading="lazy"{% endif %}>
             </div>
         {% else %}
-                <img class="activator" src="{{ projDetails.image }}" style="max-height: 100%" alt="Preview image for {{ project.title }}">
+                <img class="activator" src="{{ projDetails.image }}" style="max-height: 100%" alt="Preview image for {{ project.title }}"
+                     decoding="async"{% if forloop.counter > 3 %} loading="lazy"{% endif %}>
             </div>
         {% endif %}
             <div class="card-content white-text activator">
@@ -73,7 +75,9 @@
 
 {% block extra_body %}
 <script>
-    initializeCardFilters(JSON.parse(document.getElementById('available-filters').textContent))
-    initializeLegend();
+    document.addEventListener('DOMContentLoaded', function () {
+        initializeCardFilters(JSON.parse(document.getElementById('available-filters').textContent))
+        initializeLegend();
+    });
 </script>
 {% endblock %}
