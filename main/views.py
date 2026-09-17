@@ -22,8 +22,8 @@ def index(request):
             "jobs": job_and_detail,
             "education": Education.objects.all(),
             "skills": Skill.objects.all().order_by('skill'),
-            "page_title": "Jason Peck - Software Developer",
-            "page_description": "Jason Peck is a software developer working in JavaScript, TypeScript and Python. Read about his professional experience, education and technical skills."})
+            "page_title": "Jason Peck - Solution Architect",
+            "page_description": "Jason Peck is a Solution Architect working on system integrations, from healthcare interoperability to enterprise process automation, in TypeScript, JavaScript and Python."})
 
 def portfolio(request):
     main_images = {}
@@ -41,15 +41,10 @@ def portfolio(request):
         filter_lang = filter_lang.split(', ')
         filter_lang = ' '.join([Project.ProgramLanguage(lang).name for lang in filter_lang])
 
-        if project.githubLink != None:
-            filter_personal_status = 'Personal'
-        else:
-            filter_personal_status = 'Professional'
-
         allProjects.update({project: {
             'image': image,
             'filterLang': filter_lang,
-            'filterPersonalStatus': filter_personal_status,
+            'filterPersonalStatus': project.kind,
             # Display names, as opposed to filterLang's underscored filter keys.
             'languageList': [lang for lang in project.language.split(', ') if lang]
         }})
@@ -89,11 +84,9 @@ def build_portfolio_context(language_choices, personal_choices):
 def project(request, slug):
     project = get_object_or_404(Project, slug=slug)
 
-    template = 'main/project_html.html' if project.html_project else 'main/project_general.html'
-
     return render(
         request,
-        template,
+        'main/project_general.html',
         context={
             "project": project,
             "images": [img for img in ProjectImage.objects.all().filter(linkedProject=project)],

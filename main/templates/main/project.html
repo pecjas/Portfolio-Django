@@ -9,7 +9,7 @@
             <dd>{{ project.language }}</dd>
             {% if project.githubLink != None %}
             <dt>Source</dt>
-            <dd><a href="{{ project.githubLink }}" rel="noopener noreferrer">{{ project.githubLink }}</a></dd>
+            <dd><a href="{{ project.githubLink }}" target="_blank" rel="noopener noreferrer">{{ project.githubLink }}<span class="sr-only"> (opens in a new tab)</span></a></dd>
             {% endif %}
         </dl>
     </div>

@@ -470,14 +470,19 @@ ul, ol { margin: 0; padding: 0; }
 
 .card__text { margin: 0; color: var(--text-on-surface); }
 
-.card a { color: var(--accent-text); }
+/* :not(.btn) — a button inside a card keeps its own colour, or an accent
+   button ends up with accent-coloured text on an accent background. */
+.card a:not(.btn) { color: var(--accent-text); }
 
 /* Profile card: photo beside the text on wide screens, stacked on narrow. */
 .profile-card {
   display: grid;
   gap: 0;
   grid-template-columns: 1fr;
-  max-width: 52rem;
+  /* 52rem left the body column 455px against the 464px the three CTAs need, so
+     Download CV dropped to its own row. 56rem gives the row ~55px of headroom
+     while keeping the text under the 68ch measure. */
+  max-width: 56rem;
   margin-inline: auto;   /* otherwise it sits against the container's left edge */
 }
 
@@ -494,7 +499,44 @@ ul, ol { margin: 0; padding: 0; }
 }
 
 .profile-card__body { padding: var(--space-5); }
-.profile-card__body p { font-size: var(--text-lg); }
+.profile-card__body p { margin: 0; }
+
+/* The `margin: 0` above is (0,1,1); a universal child selector is only (0,1,0),
+   so the paragraphs were losing the gap entirely and running together. The
+   `p + p` branch matches that specificity and sits later, so it wins the tie. */
+.profile-card__body > * + *,
+.profile-card__body > p + p { margin-top: var(--space-5); }
+
+/* The opening sentence leads; the supporting line sits a step quieter. */
+.profile-card__tagline {
+  font-size: var(--text-lg);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.profile-card__body p:not(.profile-card__tagline) {
+  color: var(--text-muted);
+}
+
+/* Availability notice. Pulled back out of the muted colour above because it is
+   the line a recruiter is looking for. */
+.profile-card__body p.availability {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--text-on-surface);
+  font-weight: 600;
+}
+
+.availability__dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.22);
+  translate: 0 -1px;
+}
 
 @media (min-width: 40rem) {
   .profile-card { grid-template-columns: auto 1fr; align-items: center; }
@@ -711,8 +753,7 @@ ul, ol { margin: 0; padding: 0; }
 
 .filters {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-4);
   background: var(--surface-plain);
@@ -721,7 +762,67 @@ ul, ol { margin: 0; padding: 0; }
   box-shadow: var(--shadow-1);
 }
 
+.filters__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .filters__label { font-weight: 600; margin-right: var(--space-2); }
+
+.filters__count { margin: 0 0 0 auto; }
+
+/* Active filters, each removable on its own. The menu buttons already show a
+   pressed state, but only while the menu is open — the chips are the only
+   always-visible account of what is being filtered. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.chips__label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  margin-right: var(--space-1);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent-deep);
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.chip:hover { background: #b32a62; }
+
+.chip .icon {
+  width: 1em;
+  height: 1em;
+  opacity: 0.9;
+}
+
+/* 32px clears the WCAG minimum, but a dismiss target that small is fiddly with
+   a finger, so touch pointers get a full-size one. */
+@media (pointer: coarse) {
+  .chip {
+    min-height: 44px;
+    padding-inline: var(--space-4) var(--space-3);
+  }
+}
 
 .menu { position: relative; }
 
@@ -883,6 +984,13 @@ ul, ol { margin: 0; padding: 0; }
 
 .page-title { margin-bottom: var(--space-2); }
 
+/* A row of calls to action. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
 .lede {
   max-width: var(--measure);
   font-size: var(--text-lg);
@@ -903,7 +1011,7 @@ ul, ol { margin: 0; padding: 0; }
   box-shadow: var(--shadow-1);
 }
 
-.panel a { color: var(--accent-text); }
+.panel a:not(.btn) { color: var(--accent-text); }
 
 .meta-list {
   display: grid;

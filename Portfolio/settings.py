@@ -15,6 +15,9 @@ GOOGLE_RECAPTCHA_SITE_KEY = env.google_recaptcha_site_key
 
 GOOGLE_ANALYTICS_HEAD_INFO = env.google_analytics_head_info
 
+# Rendered in the footer when set. Left blank until the profile URL is to hand.
+LINKEDIN_URL = "https://www.linkedin.com/in/jason-j-peck/"
+
 DEBUG = env.debug
 ALLOWED_HOSTS = env.allowed_hosts
 
@@ -83,7 +86,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
-                'main.context_processors.google_analytics_head_info'
+                'main.context_processors.google_analytics_head_info',
+                'main.context_processors.site_links'
             ],
         },
     },

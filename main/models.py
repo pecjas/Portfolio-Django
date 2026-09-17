@@ -45,7 +45,13 @@ class Project(models.Model):
 
     githubLink = models.URLField(max_length=200, blank=True, null=True, verbose_name="Github Link")
 
-    html_project = models.BooleanField(default=False, verbose_name="HTML Project")
+    # Whether a project is personal used to be inferred from githubLink being
+    # set, which conflated two unrelated facts: a professional project can have
+    # public source, and a personal one need not.
+    is_personal = models.BooleanField(
+        default=True,
+        verbose_name="Personal project",
+        help_text="Personal projects are shown in the accent colour; professional ones in purple.")
 
     demoVideo = models.FileField(
         upload_to="demoVideo",
@@ -85,6 +91,10 @@ class Project(models.Model):
             suffix += 1
 
         return slug
+
+    @property
+    def kind(self):
+        return "Personal" if self.is_personal else "Professional"
 
     def get_absolute_url(self):
         return reverse("main:project", kwargs={"slug": self.slug})

@@ -15,6 +15,7 @@
     </p>
 
     <div class="filters">
+        <div class="filters__row">
         <span class="filters__label">Filter</span>
 
         <div class="menu" data-menu>
@@ -47,14 +48,21 @@
 
         <button class="btn btn--ghost" type="button" id="filter-clear" hidden>Clear filters</button>
 
-        <p id="filter-count" role="status" aria-live="polite" style="margin:0 0 0 auto;"></p>
+        <p class="filters__count" id="filter-count" role="status" aria-live="polite"></p>
+        </div>
+
+        {% comment %}Populated by filterCards.js. Labels are read from the menu
+        buttons so a chip shows "C#" rather than the C_Sharp filter key.{% endcomment %}
+        <div class="chips" id="filter-chips" hidden>
+            <span class="chips__label" id="filter-chips-label">Active filters</span>
+        </div>
     </div>
 
     <div class="card-grid" id="cardContainer">
         {% for project, projDetails in projects.items %}
-        <article class="card project-card {% if project.githubLink == None %}project-card--professional{% endif %}"
+        <article class="card project-card {% if not project.is_personal %}project-card--professional{% endif %}"
                  data-filter-lang="{{ projDetails.filterLang }}"
-                 data-filter-personal-status="{{ projDetails.filterPersonalStatus }}">
+                 data-filter-personal-status="{{ project.kind }}">
             <div class="project-card__media">
                 {% if projDetails.image == None %}
                 <img src="{% static defaultImage %}" alt="" decoding="async"{% if forloop.counter > 3 %} loading="lazy"{% endif %}>
@@ -66,7 +74,7 @@
                 <h2 class="card__title">{{ project.title }}</h2>
 
                 <ul class="project-card__tags">
-                    <li class="tag tag--kind">{{ projDetails.filterPersonalStatus }}</li>
+                    <li class="tag tag--kind">{{ project.kind }}</li>
                     {% for lang in projDetails.languageList %}
                     <li class="tag">{{ lang }}</li>
                     {% endfor %}

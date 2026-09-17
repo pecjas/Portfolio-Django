@@ -474,6 +474,8 @@ both header buttons at the 44px touch target on a 375px viewport with no overlap
 
 ## Phase 4 — Portfolio UX rebuild
 
+**Status: complete (2026-09-17).** 22 tests passing; verified at 375px and 1300px in both schemes.
+
 Most of this landed during Phase 3, because the file it lived in was being deleted.
 
 - [x] OR semantics within a filter category; AND across categories (Python + Mumps returns 6, was 1)
@@ -483,17 +485,101 @@ Most of this landed during Phase 3, because the file it lived in was being delet
 - [x] CSS transitions in place of jQuery animations
 - [x] Rewrite `filterCards.js` as a module — no implicit globals, no `console.log`
 - [x] Reposition the legend so it never overlaps content, and label each swatch in text
-- [ ] Active-filter chips with individual remove — the menu buttons show pressed state and there is
-      a clear-all, but there is no separate chip row summarising the active filters
-- [ ] Keyboard support inside the filter menus (arrow keys, focus wrap)
+- [x] Active-filter chips with individual remove
+- [x] Keyboard support inside the filter menus
+
+### Active-filter chips
+
+A row inside the filter panel lists every active filter as a removable pill. The menu buttons
+already carried a pressed state, but only while their menu is open — the chips are the only
+always-visible account of what is being filtered.
+
+Labels come from the menu buttons themselves, read once at init into a lookup. That keeps display
+names in the template rather than duplicating the `ProgramLanguage` enum in JavaScript, so a chip
+reads "C#" rather than the `C_Sharp` filter key.
+
+Removing a chip moves focus to whichever chip takes its place, or to Clear filters when the row
+empties, rather than dropping focus to `<body>` and losing a keyboard user's position.
+
+Chips are 32px tall, which clears the WCAG 2.5.8 minimum of 24px. Under `(pointer: coarse)` they
+grow to 44px, since a small dismiss target is awkward with a finger.
+
+### Filter menu keyboard support
+
+The menus are disclosures containing toggle buttons, not ARIA menus — `aria-pressed` is the right
+state for a filter, and `menuitem` does not carry it. So the buttons stay native and the keys are a
+convenience layer on top:
+
+| Key | Behaviour |
+|---|---|
+| ArrowDown / ArrowUp on the trigger | opens the panel, focuses first / last option |
+| ArrowDown / ArrowUp in the panel | moves focus, wrapping at both ends |
+| Home / End | first / last option |
+| A printable character | jumps to the next option starting with it, cycling |
+| Escape | closes and returns focus to the trigger |
+| Tab | closes the panel rather than leaving it open behind the focus |
+
+Verified with real key events: ArrowDown from the Language trigger opens and lands on "C#";
+ArrowUp from the first option wraps to "Unspecified"; "p" then "p" moves PHP → PowerShell; Escape
+restores focus to the trigger with `aria-expanded="false"`; Tab closes the panel behind it.
+
+### Remaining
+
+Nothing outstanding for this phase.
 
 ## Phase 5 — Content and IA
 
-- [ ] Home page headline + tagline + primary CTA above the fold
-- [ ] Footer with LinkedIn, GitHub, email
-- [ ] Resume download
-- [ ] Fix the dual "Present" — set Epic Systems' end date
-- [ ] Fix "leading me to experimented with" → "experiment with"
-- [ ] Restructure project pages as case studies: problem → approach → outcome
-- [ ] Decouple Personal/Professional from `githubLink` presence — add an explicit model field
-- [ ] Either implement `project_html.html` or remove the `html_project` code path
+**Status: code complete (2026-09-17); several items need content or assets only Jason has.**
+26 tests passing; verified at 375px and 1300px in both schemes.
+
+- [x] Home page opener: tagline + primary CTAs, merged into the profile card *(copy is a draft)*
+- [x] Footer with GitHub, Contact and a direct email link; LinkedIn wired, awaiting a URL
+- [~] Resume download — mechanism built, awaiting the PDF
+- [ ] Fix the dual "Present" — production data, needs Epic Systems' end date
+- [x] Fix "leading me to experimented with" → "experiment with"
+- [x] ~~Restructure project pages as case studies~~ — **declined**, no structured fields wanted
+- [x] Decouple Personal/Professional from `githubLink` presence
+- [x] Remove the `html_project` code path
+
+### Personal vs Professional is now a real field
+
+`Project.is_personal` replaces the old inference from `githubLink`, which conflated two unrelated
+facts: a professional project can have public source, and a personal one need not. Migration
+`0003_project_is_personal` seeds it from the old heuristic, so nothing changed on the page, then
+drops `html_project`.
+
+`html_project` was dead: `False` on every row, and the template it selected — `project_html.html` —
+was an empty stub, so any project using it would have rendered a title and description and nothing
+else. Removing it is a schema change, reversible by rolling the migration back.
+
+The field is editable straight from the admin list (`list_editable`), with a filter, so
+recategorising a few projects does not mean opening each one.
+
+### One opener, not two
+
+The first pass left two competing intros: a centred tagline block and the older profile card
+underneath. They have been merged — photo on the left, the current-role tagline, a supporting line
+about personal projects, then the calls to action, all in a single card. The older bio paragraph is
+gone; its accurate parts live in the tagline and its "visit the portfolio page" link is now the
+"View my work" button.
+
+Moving the buttons inside the card exposed a bug worth noting: `.card a { color: var(--accent-text) }`
+applied to them, so the accent button rendered accent-coloured text on an accent background —
+**1.70:1**. Both link rules are now `a:not(.btn)`, and the buttons are back to 5.08:1 and 10.15:1.
+Caught by the contrast sweep, not by eye.
+
+### Optional assets render only when present
+
+A `static_if_exists` template tag returns a static URL or an empty string, so the CV links on the
+home page and in the footer appear only once `main/static/main/files/jason-peck-resume.pdf` exists.
+No dead link in the meantime. `LINKEDIN_URL` in settings behaves the same way for the footer link.
+
+### Outstanding, and what each needs
+
+| Item | Needs |
+|---|---|
+| Tagline copy | Jason's own wording; the draft is marked as such in the template |
+| LinkedIn link | the profile URL, into `LINKEDIN_URL` in `Portfolio/settings.py` |
+| CV download | drop the PDF at `main/static/main/files/jason-peck-resume.pdf` |
+| Dual "Present" | set Epic Systems' end date in the production admin |
+| Project copy | the Portfolio Website description still credits Materialize |

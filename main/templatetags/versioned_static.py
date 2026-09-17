@@ -8,6 +8,19 @@ register = template.Library()
 
 
 @register.simple_tag
+def static_if_exists(path):
+    """The static URL for `path`, or an empty string when the file is absent.
+
+    Lets a template offer something optional — a CV, say — without shipping a
+    link that 404s until the file is dropped in.
+    """
+    if finders.find(path) is None:
+        return ""
+
+    return versioned_static(path)
+
+
+@register.simple_tag
 def versioned_static(path):
     """Like {% static %}, but appends the file's modification time as ?v=.
 

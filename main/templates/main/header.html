@@ -7,7 +7,7 @@
     <meta name="author" content="Jason Peck">
     <meta name="color-scheme" content="light dark">
 
-    {% with meta_title=page_title|default:"Jason Peck - Software Developer" meta_description=page_description|default:"The software development portfolio of Jason Peck, covering professional experience and sample projects in Python, JavaScript, HTML and SQL." %}
+    {% with meta_title=page_title|default:"Jason Peck - Solution Architect" meta_description=page_description|default:"The portfolio of Jason Peck, Solution Architect: professional and personal projects in Python, JavaScript, TypeScript, SQL and more." %}
     <title>{{ meta_title }}</title>
     <meta name="description" content="{{ meta_description }}">
     <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
@@ -18,11 +18,11 @@
     <meta property="og:title" content="{{ meta_title }}">
     <meta property="og:description" content="{{ meta_description }}">
     <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
-    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'main/img/jasonpeck.png' %}">
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'main/img/jasonpeck.jpg' %}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ meta_title }}">
     <meta name="twitter:description" content="{{ meta_description }}">
-    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'main/img/jasonpeck.png' %}">
+    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'main/img/jasonpeck.jpg' %}">
     {% endwith %}
 
     <link href="{% versioned_static 'main/css/app.css' %}" rel="stylesheet">

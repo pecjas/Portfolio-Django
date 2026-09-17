@@ -23,6 +23,15 @@
   var selected = {};
   var elements = {};
 
+  /* category + "|" + value -> the label a human reads, e.g. "C#" for C_Sharp.
+     Read off the menu buttons at init so the display names stay in one place,
+     the template. */
+  var labels = {};
+
+  function labelFor(category, value) {
+    return labels[category + "|" + value] || value;
+  }
+
   function selectedIn(category) {
     return selected[category] || [];
   }
@@ -72,6 +81,66 @@
       var isOn = selectedIn(category).indexOf(button.dataset.filterValue) !== -1;
       button.setAttribute("aria-pressed", String(isOn));
     });
+
+    renderChips();
+  }
+
+  function renderChips() {
+    if (!elements.chips) return;
+
+    // Everything after the label is a chip from the previous render.
+    while (elements.chips.lastElementChild && elements.chips.lastElementChild.classList.contains("chip")) {
+      elements.chips.removeChild(elements.chips.lastElementChild);
+    }
+
+    var any = false;
+
+    CATEGORIES.forEach(function (category) {
+      selectedIn(category).forEach(function (value) {
+        any = true;
+        elements.chips.appendChild(buildChip(category, value));
+      });
+    });
+
+    elements.chips.hidden = !any;
+  }
+
+  function buildChip(category, value) {
+    var label = labelFor(category, value);
+
+    var chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip";
+    chip.setAttribute("aria-label", "Remove filter: " + label);
+    chip.appendChild(document.createTextNode(label));
+
+    var icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    icon.setAttribute("class", "icon");
+    icon.setAttribute("aria-hidden", "true");
+
+    var use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttribute("href", "#i-close");
+    icon.appendChild(use);
+    chip.appendChild(icon);
+
+    chip.addEventListener("click", function () {
+      var chips = Array.prototype.slice.call(elements.chips.querySelectorAll(".chip"));
+      var position = chips.indexOf(chip);
+
+      toggle(category, value);
+
+      // Keep focus in the row rather than dropping it to <body>: the chip that
+      // took this one's place, or the clear-all button once the row is empty.
+      var remaining = elements.chips.querySelectorAll(".chip");
+
+      if (remaining.length) {
+        remaining[Math.min(position, remaining.length - 1)].focus();
+      } else if (elements.clear && !elements.clear.hidden) {
+        elements.clear.focus();
+      }
+    });
+
+    return chip;
   }
 
   function toggle(category, value) {
@@ -176,10 +245,13 @@
     elements.count = document.getElementById("filter-count");
     elements.empty = document.getElementById("filter-empty");
     elements.clear = document.getElementById("filter-clear");
+    elements.chips = document.getElementById("filter-chips");
 
     readUrl();
 
     document.querySelectorAll("[data-filter-value]").forEach(function (button) {
+      labels[button.dataset.filterCategory + "|" + button.dataset.filterValue] = button.textContent.trim();
+
       button.addEventListener("click", function () {
         toggle(button.dataset.filterCategory, button.dataset.filterValue);
       });

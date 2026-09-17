@@ -134,6 +134,28 @@ class PageSmokeTests(TestCase):
             with self.subTest(url=url):
                 self.assertNotIn("{#", self.client.get(url).content.decode())
 
+    def test_filter_controls_degrade_without_javascript(self):
+        """Filtering is a JS enhancement, so its controls must not be offered
+        as working UI in a response that JS has not touched yet."""
+        html = self.client.get(reverse("main:portfolio")).content.decode()
+
+        for element_id in ["filter-chips", "filter-empty", "filter-clear"]:
+            with self.subTest(element=element_id):
+                at = html.index('id="%s"' % element_id)
+                tag = html[html.rindex("<", 0, at):html.index(">", at)]
+                self.assertIn("hidden", tag)
+
+        # Every project is present and linked regardless.
+        self.assertEqual(html.count('class="card project-card'), Project.objects.count())
+
+    def test_filter_menu_buttons_carry_their_display_labels(self):
+        """The chips read their labels off these buttons, so C_Sharp must render
+        as its display name rather than the filter key."""
+        html = self.client.get(reverse("main:portfolio")).content.decode()
+
+        self.assertIn('data-filter-value="C_Sharp"', html)
+        self.assertRegex(html, r'data-filter-value="C_Sharp"[^>]*>\s*C#')
+
     def test_unknown_project_returns_404(self):
         response = self.client.get(reverse("main:project", kwargs={"slug": "does-not-exist"}))
         self.assertEqual(response.status_code, 404)
@@ -194,6 +216,121 @@ class ProjectSlugTests(TestCase):
             content="y")
 
         self.assertEqual(project.slug, "chosen-by-hand")
+
+
+class ProjectKindTests(TestCase):
+    """Personal/Professional is now an explicit field, not an inference."""
+
+    def test_kind_reads_from_the_field_not_the_github_link(self):
+        professional_with_source = Project.objects.create(
+            title="Open sourced at work",
+            briefDescription="x",
+            content="y",
+            githubLink="https://github.com/example/repo",
+            is_personal=False)
+
+        personal_without_source = Project.objects.create(
+            title="Private side project",
+            briefDescription="x",
+            content="y",
+            is_personal=True)
+
+        # Both combinations were impossible to express under the old heuristic.
+        self.assertEqual(professional_with_source.kind, "Professional")
+        self.assertEqual(personal_without_source.kind, "Personal")
+
+    def test_portfolio_page_renders_the_field(self):
+        Project.objects.create(
+            title="Work thing",
+            briefDescription="x",
+            content="y",
+            githubLink="https://github.com/example/repo",
+            is_personal=False)
+
+        html = self.client.get(reverse("main:portfolio")).content.decode()
+
+        self.assertIn('data-filter-personal-status="Professional"', html)
+        self.assertIn("project-card--professional", html)
+
+
+class OutboundLinkTests(TestCase):
+    """Links that leave the site open in a new tab, safely and audibly."""
+
+    def test_profile_links_open_in_a_new_tab(self):
+        with self.settings(LINKEDIN_URL="https://www.linkedin.com/in/jason-j-peck/"):
+            html = self.client.get(reverse("main:index")).content.decode()
+
+        for host in ["github.com/pecjas", "linkedin.com/in/"]:
+            with self.subTest(host=host):
+                at = html.index(host)
+                tag = html[html.rindex("<a", 0, at):html.index(">", at)]
+                self.assertIn('target="_blank"', tag)
+
+    def test_every_new_tab_link_sets_rel_noopener(self):
+        """Without it, the opened page can reach back via window.opener."""
+        import re
+
+        with self.settings(LINKEDIN_URL="https://www.linkedin.com/in/jason-j-peck/"):
+            pages = [
+                self.client.get(reverse("main:index")).content.decode(),
+                self.client.get(reverse("main:portfolio")).content.decode(),
+            ]
+
+        for html in pages:
+            for tag in re.findall(r"<a[^>]*target=\"_blank\"[^>]*>", html):
+                with self.subTest(tag=tag[:70]):
+                    self.assertIn("noopener", tag)
+
+    def test_new_tab_links_announce_themselves(self):
+        """Opening a new tab unannounced is disorienting for screen reader users."""
+        with self.settings(LINKEDIN_URL="https://www.linkedin.com/in/jason-j-peck/"):
+            html = self.client.get(reverse("main:index")).content.decode()
+
+        self.assertEqual(html.count("(opens in a new tab)"), 2)
+
+    def test_internal_links_stay_in_the_same_tab(self):
+        html = self.client.get(reverse("main:index")).content.decode()
+
+        for internal in [reverse("main:portfolio"), reverse("main:contact")]:
+            at = html.index('href="%s"' % internal)
+            tag = html[html.rindex("<a", 0, at):html.index(">", at)]
+            self.assertNotIn("target=", tag)
+
+
+class OptionalAssetTests(TestCase):
+    """A CV link should appear only once there is a CV to link to."""
+
+    CV = "main/files/jason-peck-resume.pdf"
+
+    def test_link_presence_tracks_the_file(self):
+        """Whether the CV link renders should follow whether the file is there,
+        so this holds both before and after the PDF is added."""
+        from django.contrib.staticfiles import finders
+
+        cv_exists = finders.find(self.CV) is not None
+
+        for url in [reverse("main:index"), reverse("main:contact")]:
+            with self.subTest(url=url, cv_exists=cv_exists):
+                html = self.client.get(url).content.decode()
+                self.assertEqual("jason-peck-resume.pdf" in html, cv_exists)
+
+    def test_link_is_served_from_static_not_the_app_root(self):
+        """A file dropped at main/files/ rather than main/static/main/files/ is
+        invisible to the staticfiles finders, which is how it was first missed."""
+        from django.contrib.staticfiles import finders
+
+        found = finders.find(self.CV)
+
+        if found is None:
+            self.skipTest("no CV present in this checkout")
+
+        self.assertIn("static", found.replace("\\", "/").lower())
+
+    def test_static_if_exists_returns_empty_for_missing_file(self):
+        from main.templatetags.versioned_static import static_if_exists
+
+        self.assertEqual(static_if_exists("main/files/definitely-not-here.pdf"), "")
+        self.assertNotEqual(static_if_exists("main/css/app.css"), "")
 
 
 class LegacyProjectUrlTests(TestCase):

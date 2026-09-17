@@ -43,6 +43,39 @@
     });
   }
 
+  function menuItems(panel) {
+    return Array.prototype.slice.call(panel.querySelectorAll("button"));
+  }
+
+  function focusItem(panel, index) {
+    var items = menuItems(panel);
+    if (!items.length) return;
+
+    // Wrap at both ends rather than dead-ending.
+    var wrapped = (index + items.length) % items.length;
+    items[wrapped].focus();
+  }
+
+  function openMenu(menu, focusFirst) {
+    var button = menu.querySelector("[data-menu-button]");
+    var panel = menu.querySelector("[data-menu-panel]");
+
+    closeAllMenus(menu);
+    button.setAttribute("aria-expanded", "true");
+    panel.hidden = false;
+
+    if (focusFirst) focusItem(panel, 0);
+  }
+
+  function closeMenu(menu, returnFocus) {
+    var button = menu.querySelector("[data-menu-button]");
+
+    button.setAttribute("aria-expanded", "false");
+    menu.querySelector("[data-menu-panel]").hidden = true;
+
+    if (returnFocus) button.focus();
+  }
+
   function initMenus() {
     var menus = document.querySelectorAll("[data-menu]");
     if (!menus.length) return;
@@ -53,14 +86,63 @@
 
       button.addEventListener("click", function (event) {
         event.stopPropagation();
-        var isOpen = button.getAttribute("aria-expanded") === "true";
-        closeAllMenus(menu);
-        button.setAttribute("aria-expanded", String(!isOpen));
-        panel.hidden = isOpen;
+
+        if (button.getAttribute("aria-expanded") === "true") closeMenu(menu, false);
+        else openMenu(menu, false);
+      });
+
+      // Down-arrow from the trigger opens and lands on the first option.
+      button.addEventListener("keydown", function (event) {
+        if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+
+        event.preventDefault();
+        openMenu(menu, false);
+        focusItem(panel, event.key === "ArrowDown" ? 0 : -1);
       });
 
       panel.addEventListener("click", function (event) {
         event.stopPropagation();
+      });
+
+      panel.addEventListener("keydown", function (event) {
+        var items = menuItems(panel);
+        var at = items.indexOf(document.activeElement);
+
+        switch (event.key) {
+          case "ArrowDown":
+            event.preventDefault();
+            focusItem(panel, at + 1);
+            break;
+          case "ArrowUp":
+            event.preventDefault();
+            focusItem(panel, at - 1);
+            break;
+          case "Home":
+            event.preventDefault();
+            focusItem(panel, 0);
+            break;
+          case "End":
+            event.preventDefault();
+            focusItem(panel, items.length - 1);
+            break;
+          case "Tab":
+            // Let focus leave naturally, but do not leave the panel open behind it.
+            closeMenu(menu, false);
+            break;
+          default:
+            // Type-ahead: one printable character jumps to the next match.
+            if (event.key.length !== 1 || event.altKey || event.ctrlKey || event.metaKey) return;
+
+            var needle = event.key.toLowerCase();
+            for (var step = 1; step <= items.length; step++) {
+              var candidate = items[(at + step + items.length) % items.length];
+              if (candidate.textContent.trim().toLowerCase().indexOf(needle) === 0) {
+                event.preventDefault();
+                candidate.focus();
+                break;
+              }
+            }
+        }
       });
     });
 
@@ -70,9 +152,12 @@
 
     document.addEventListener("keydown", function (event) {
       if (event.key !== "Escape") return;
+
       var open = document.querySelector('[data-menu-button][aria-expanded="true"]');
+      if (!open) return;
+
       closeAllMenus(null);
-      if (open) open.focus();
+      open.focus();
     });
   }
 
