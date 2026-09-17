@@ -166,11 +166,23 @@ Also outstanding from this phase:
 - [ ] `manage.py check --deploy` reports pre-existing security warnings unrelated to this phase:
       no `SECURE_HSTS_SECONDS`, no `SECURE_SSL_REDIRECT`, a short `SECRET_KEY`, and neither
       `SESSION_COOKIE_SECURE` nor `CSRF_COOKIE_SECURE` set. Worth folding into Phase 2.
-- [ ] The bio card on the home page keeps its horizontal layout at 375px, squeezing the text into a
-      narrow column. Pre-existing, but only visible now that the viewport is honest. Phase 3 rebuilds
-      the card system and will resolve it.
-- [ ] The portfolio filter buttons truncate at 375px (`.filter-container` is `width: 50%`).
-      Pre-existing; Phase 4 rebuilds the filter UI.
+- [x] The bio card on the home page kept its horizontal layout at 375px. Below 600px it now stacks:
+      photo centred on top, text full width underneath.
+- [x] The portfolio filter buttons truncated at 375px. `.filter-container` now drops its `width: 50%`
+      below 600px and uses side margins instead, so both labels fit.
+- [x] A tall gap sat between the banner and the first card on phones. Materialize ships
+      `.carousel.carousel-slider { min-height: 165px }`, a floor meant for full-screen sliders; the
+      banner artwork is only 215px tall, so below roughly 1535px wide the box floored at 165px and
+      left empty space. The carousel now derives its height from the artwork's 2000:215 aspect ratio
+      with `min-height: 0`, so it is exactly as tall as the image at every width.
+- [ ] The bio card is still cramped at tablet widths: `col s12 m7` gives it 7/12 of the container
+      from 601px up, so the text column is roughly 200px at 768px. Not addressed here because it
+      needs a layout decision rather than a breakpoint. Phase 3.
+
+Note for future custom rules: the custom block sits at the *top* of `materialize.css`, so a custom
+rule with the same specificity as a vendor rule loses on source order. Overriding a vendor
+declaration currently needs `!important`. Phase 2's extraction into a separate stylesheet loaded
+after Materialize removes that constraint.
 
 ## Phase 2 — Dependency modernization
 

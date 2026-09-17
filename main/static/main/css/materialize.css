@@ -100,9 +100,10 @@
   width: 20px;
   clear: both}
 
-/* On phones there is no margin to float the legend into, so it sits inline
-   above the filters rather than covering the page heading. */
-@media only screen and (max-width: 600px) {
+/* Below Materialize's large breakpoint there is no side margin to float the
+   legend into, so it sits inline above the filters rather than covering the
+   page heading. */
+@media only screen and (max-width: 992px) {
   .div-fixed {
     position: static !important;
     width: auto;
@@ -119,6 +120,39 @@
 
   .div-fixed-item {
     margin-bottom: 0;}
+}
+
+@media only screen and (max-width: 600px) {
+  /* A horizontal card splits a phone's width into two unreadably narrow
+     columns. Stack it: image centred on top, text full width underneath. */
+  .card.horizontal {
+    flex-direction: column;}
+
+  /* !important on the two properties Materialize sets again further down this
+     file; the custom block sits above the vendor rules, so equal specificity
+     loses on source order. Phase 2 moves this out to its own stylesheet. */
+  .card.horizontal .card-image {
+    max-width: 100% !important;
+    display: flex;
+    justify-content: center;
+    /* Matches .card-content's 24px padding, so the image sits the same
+       distance from the top of the card as it does from the text below. */
+    padding-top: 24px;}
+
+  .card.horizontal .card-image img {
+    width: auto;
+    max-width: 100%;
+    max-height: 320px;
+    border-radius: 2px 2px 0 0 !important;}
+
+  .card.horizontal .card-stacked {
+    width: 100%;}
+
+  /* At 50% of a phone's width the filter buttons clip their own labels. */
+  .filter-container {
+    width: auto;
+    margin-left: 16px;
+    margin-right: 16px;}
 }
 
 .col.centered-col{
@@ -154,6 +188,21 @@
   line-height: 110%;
   font-weight: 400;
   margin: 0.7666666667rem 0 0.46rem 0;}
+
+/* The banner images are a fixed 2000x215. Materialize sizes the carousel from
+   the image height at init, which leaves a tall empty box once the viewport is
+   narrower than that measurement. Deriving the height from the aspect ratio
+   keeps the box exactly as tall as the artwork at every width. !important is
+   needed because Materialize writes its height inline. */
+.carousel.carousel-slider {
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 2000 / 215;}
+
+.carousel.carousel-slider .carousel-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;}
 
 /* Keeps the section marked active open from first paint, rather than only once
    Materialize's JS has initialised. Materialize sets an inline display when it
