@@ -2,23 +2,20 @@
 
 {% block project_content %}
 {% if project.demoVideo %}
-<div class="row center-align">
-    <video class="responsive-video" controls autoplay loop muted>
-        <source src="{{ project.demoVideo.url }}" type="video/mp4">
-            Your browser does not support the video tag.
-    </video>
+<video controls loop muted playsinline>
+    <source src="{{ project.demoVideo.url }}" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
+{% endif %}
+
+{% if images %}
+<div class="gallery">
+    {% for image in images %}
+    <figure class="card">
+        <img class="zoomable" src="{{ image.image.url }}" alt="{{ image.title }}"
+             width="{{ image.width }}" height="{{ image.height }}" loading="lazy" decoding="async">
+    </figure>
+    {% endfor %}
 </div>
 {% endif %}
-<div class="row">
-{% for image in images %}
-    <div class="col {% if images|length > 1 %}s12 m6{% endif %}">
-        <div class="card">
-            <div class="card-image">
-                <img class="materialboxed" src="{{ image.image.url }}" alt="{{ image.title }}"
-                     width="{{ image.width }}" height="{{ image.height }}" loading="lazy" decoding="async">
-            </div>
-        </div>
-    </div>
-{% endfor %}
-</div>
 {% endblock %}

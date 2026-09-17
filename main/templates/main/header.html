@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="author" content="Jason Peck">
+    <meta name="color-scheme" content="light dark">
 
     {% with meta_title=page_title|default:"Jason Peck - Software Developer" meta_description=page_description|default:"The software development portfolio of Jason Peck, covering professional experience and sample projects in Python, JavaScript, HTML and SQL." %}
     <title>{{ meta_title }}</title>
@@ -24,9 +25,21 @@
     <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'main/img/jasonpeck.png' %}">
     {% endwith %}
 
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="{% versioned_static 'main/css/materialize.css' %}" rel="stylesheet">
-    <link href="{% versioned_static 'main/css/custom.css' %}" rel="stylesheet">
+    <link href="{% versioned_static 'main/css/app.css' %}" rel="stylesheet">
+
+    {% comment %}Runs before first paint, so a saved dark preference does not
+    flash the light palette on the way in. Deliberately inline and synchronous;
+    a deferred script would run too late to prevent that.{% endcomment %}
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem("theme");
+                if (saved === "light" || saved === "dark") {
+                    document.documentElement.setAttribute("data-theme", saved);
+                }
+            } catch (e) { /* storage blocked; fall back to the OS preference */ }
+        })();
+    </script>
 
     <!--Favicon code -->
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'main/img/favicon/apple-touch-icon.png' %}">
@@ -37,16 +50,16 @@
     <link rel="shortcut icon" href="{% static 'main/img/favicon/favicon.ico' %}">
     <meta name="msapplication-TileColor" content="#d29ae7">
     <meta name="msapplication-config" content="{% static 'main/img/favicon/browserconfig.xml' %}">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#44318D">
 
-    <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    <script defer src="{% versioned_static 'main/js/filterCards.js' %}"></script>
-    <script defer src="{% versioned_static 'main/js/portfolioLegend.js' %}"></script>
+    <script defer src="{% versioned_static 'main/js/app.js' %}"></script>
     {% block extra_head %}{% endblock %}
 </head>
 
 <body>
+    {% include "main/includes/icons.html" %}
+
+    <a class="skip-link" href="#main-content">Skip to content</a>
 
     {% include "main/includes/navbar.html" %}
     {% include "main/includes/messages.html" %}
@@ -56,8 +69,8 @@
         {% endblock %}
     </main>
 
-    <script>document.addEventListener('DOMContentLoaded', function () { M.AutoInit(); });</script>
-    {% block extra_body %}{% endblock %}
+    {% include "main/includes/footer.html" %}
 
+    {% block extra_body %}{% endblock %}
 </body>
 </html>

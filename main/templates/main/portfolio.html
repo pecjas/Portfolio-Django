@@ -1,83 +1,93 @@
 {% extends "main/header.html" %}
-{% load static %}
+{% load static versioned_static %}
 
 {% block content %}
-<div class="container">
-<h1 class="center-align dark-purple-text">Portfolio</h1>
-<div class="card div-fixed" id="legend">
-    <div class="box dark-purple div-fixed-item"></div><div class="div-fixed-item">Professional</div>
-    <div class="box hot-pink div-fixed-item"></div><div class="div-fixed-item">Personal</div>
-</div>
-<div class="filter-container center-align">
-    <div class="filter-title">
-        Project Filters
+<div class="container section stack">
+    <div>
+        <h1 class="page-title">Portfolio</h1>
+        <p class="lede">Professional and personal projects. Filter by language or project type.</p>
     </div>
-    <a class='dropdown-trigger btn waves-effect waves-light medium-purple white-text' data-target='languageDropdown'>Language</a>
-    <ul id='languageDropdown' class='dropdown-content'>
-        {% for language, languageDisplay in language_choices.items %}
-        <li><a class="dark-purple-text" onclick="updateFilters('data-filter-lang','{{ language }}')" id="data-filter-lang-{{ language }}">{{ languageDisplay }}</a></li>
-        <li class="divider" tabindex="-1"></li>
-        {% endfor %}
-    </ul>
-    <a class='dropdown-trigger btn waves-effect waves-light medium-purple white-text' data-target='projectDropdown'>Project Type</a>
-    <ul id='projectDropdown' class='dropdown-content'>
-        {% for type in data_filter_personal_status %}
-        <li><a class="dark-purple-text" onclick="updateFilters('data-filter-personal-status','{{ type }}')" id="data-filter-personal-status-{{ type }}">{{ type }}</a></li>
-        <li class="divider" tabindex="-1"></li>
-        {% endfor %}
-    </ul>
-</div>
-<br>
-<div class="row" id="cardContainer">
-    {% for project, projDetails in projects.items %}
-    <div class="col s12 m6 l4" data-filter-lang="{{ projDetails.filterLang }}" data-filter-personal-status="{{ projDetails.filterPersonalStatus }}">
-        {% if project.githubLink != None %}
-        <div class="card hot-pink hoverable sticky-action">
-            <div class="card-image valign-wrapper hot-pink darken" style="height: 280px">
-        {% else %}
-        <div class="card dark-purple hoverable sticky-action">
-            <div class="card-image valign-wrapper dark-purple darken" style="height: 280px">
-        {% endif %}
-        {% if projDetails.image == None %}
-                <img class="activator" src="{% static defaultImage %}" style="max-height: 100%" alt=""
-                     decoding="async"{% if forloop.counter > 3 %} loading="lazy"{% endif %}>
-            </div>
-        {% else %}
-                <img class="activator" src="{{ projDetails.image }}" style="max-height: 100%" alt="Preview image for {{ project.title }}"
-                     decoding="async"{% if forloop.counter > 3 %} loading="lazy"{% endif %}>
-            </div>
-        {% endif %}
-            <div class="card-content white-text activator">
-                <h2 class="card-title activator heading-reset"><strong class="activator">{{project.title}}</strong></h2>
-                <div class="activator" style="padding-bottom: 4px;">
-                    <span class="activator"><strong class="activator">Brief Description</strong><i class="material-icons right" aria-hidden="true">expand_less</i></span>
-                </div>
-                <p style="padding-bottom: 4px;" class="activator"><strong class="activator">Language: </strong>{% for lang in project.language %}{{lang}}{% endfor %}</p>
-                <div class="card-action center-align" style="max-height: 2%;">
-                    <a style="color:white; max-height: 2%;" href="{% url 'main:project' project.slug %}">View Full Page</a>
-                </div>
-            </div>
-            {% if project.githubLink != None %}
-            <div class="card-reveal hot-pink white-text">
-            {% else %}
-            <div class="card-reveal dark-purple white-text">
-            {% endif %}
-                <span class="card-title">{{project.title}}<i class="material-icons right" aria-hidden="true">expand_more</i></span>
-                <p>{{project.briefDescription}}</p>
-            </div>
+
+    <p class="legend">
+        <span class="legend__label">Project Type</span>
+        <span class="legend__item"><span class="legend__swatch legend__swatch--professional"></span>Professional</span>
+        <span class="legend__item"><span class="legend__swatch"></span>Personal</span>
+    </p>
+
+    <div class="filters">
+        <span class="filters__label">Filter</span>
+
+        <div class="menu" data-menu>
+            <button class="btn btn--ghost" type="button" data-menu-button aria-expanded="false" aria-controls="menu-language">
+                Language
+                <svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </button>
+            <ul class="menu__panel" id="menu-language" data-menu-panel hidden>
+                {% for language, languageDisplay in language_choices.items %}
+                <li>
+                    <button type="button" data-filter-value="{{ language }}" data-filter-category="data-filter-lang" aria-pressed="false">{{ languageDisplay }}</button>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
+
+        <div class="menu" data-menu>
+            <button class="btn btn--ghost" type="button" data-menu-button aria-expanded="false" aria-controls="menu-kind">
+                Project type
+                <svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </button>
+            <ul class="menu__panel" id="menu-kind" data-menu-panel hidden>
+                {% for type in data_filter_personal_status %}
+                <li>
+                    <button type="button" data-filter-value="{{ type }}" data-filter-category="data-filter-personal-status" aria-pressed="false">{{ type }}</button>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <button class="btn btn--ghost" type="button" id="filter-clear" hidden>Clear filters</button>
+
+        <p id="filter-count" role="status" aria-live="polite" style="margin:0 0 0 auto;"></p>
     </div>
-    {% endfor %}
+
+    <div class="card-grid" id="cardContainer">
+        {% for project, projDetails in projects.items %}
+        <article class="card project-card {% if project.githubLink == None %}project-card--professional{% endif %}"
+                 data-filter-lang="{{ projDetails.filterLang }}"
+                 data-filter-personal-status="{{ projDetails.filterPersonalStatus }}">
+            <div class="project-card__media">
+                {% if projDetails.image == None %}
+                <img src="{% static defaultImage %}" alt="" decoding="async"{% if forloop.counter > 3 %} loading="lazy"{% endif %}>
+                {% else %}
+                <img src="{{ projDetails.image }}" alt="Preview of {{ project.title }}" decoding="async"{% if forloop.counter > 3 %} loading="lazy"{% endif %}>
+                {% endif %}
+            </div>
+            <div class="card__body project-card__body">
+                <h2 class="card__title">{{ project.title }}</h2>
+
+                <ul class="project-card__tags">
+                    <li class="tag tag--kind">{{ projDetails.filterPersonalStatus }}</li>
+                    {% for lang in projDetails.languageList %}
+                    <li class="tag">{{ lang }}</li>
+                    {% endfor %}
+                </ul>
+
+                <p class="card__text">{{ project.briefDescription }}</p>
+
+                <p class="project-card__link">
+                    <a href="{% url 'main:project' project.slug %}">View project<span class="sr-only"> {{ project.title }}</span> &rarr;</a>
+                </p>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    <p class="empty-state" id="filter-empty" hidden>
+        No projects match those filters. <button class="btn btn--ghost" type="button" onclick="document.getElementById('filter-clear').click()">Clear filters</button>
+    </p>
 </div>
-</div>
-{{ filterList|json_script:"available-filters" }}
 {% endblock %}
 
 {% block extra_body %}
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        initializeCardFilters(JSON.parse(document.getElementById('available-filters').textContent))
-        initializeLegend();
-    });
-</script>
+<script defer src="{% versioned_static 'main/js/filterCards.js' %}"></script>
 {% endblock %}

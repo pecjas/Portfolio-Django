@@ -1,16 +1,39 @@
-<nav>
-    <div class="nav-wrapper">
-        <a href="{% url 'main:index' %}" class="brand-logo grey-purple-text">Jason Peck</a>
-        <a href="#mobile-menu" data-target="mobile-menu" class="sidenav-trigger" aria-label="Open navigation menu"><i class="material-icons grey-purple-text" aria-hidden="true">menu</i></a>
-        <ul class="right hide-on-med-and-down">
-            <li style="width: 115px;"><nobr><a href="{% url 'main:portfolio' %}" class="grey-purple-text"><i class="material-icons right grey-purple-text" aria-hidden="true">folder</i>Portfolio</a></nobr></li>
-            <li style="width: 112px;"><nobr><a href="{% url 'main:contact' %}" class="grey-purple-text"><i class="material-icons right grey-purple-text" aria-hidden="true">contact_mail</i>Contact</a></nobr></li>
-        </ul>
-    </div>
-</nav>
+<header class="site-header">
+    <div class="container site-header__inner">
+        <a class="brand" href="{% url 'main:index' %}">Jason Peck</a>
 
-<ul class="sidenav medium-purple" id="mobile-menu">
-    <li><a href="{% url 'main:index' %}" class="grey-purple-text">Home</a></li>
-    <li><a href="{% url 'main:portfolio' %}" class="grey-purple-text">Portfolio</a></li>
-    <li><a href="{% url 'main:contact' %}" class="grey-purple-text">Contact</a></li>
-</ul>
+        <nav aria-label="Main">
+            <ul class="nav">
+                <li><a href="{% url 'main:portfolio' %}" data-nav-link><svg class="icon" aria-hidden="true"><use href="#i-folder"/></svg>Portfolio</a></li>
+                <li><a href="{% url 'main:contact' %}" data-nav-link><svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg>Contact</a></li>
+            </ul>
+        </nav>
+
+        <div class="site-header__actions">
+            {% comment %}Rendered without a label; app.js fills in the icon and
+            label once it knows the active mode, so the markup never advertises
+            a state the page is not actually in.{% endcomment %}
+            <button class="theme-toggle" type="button" data-theme-toggle hidden>
+                <svg class="icon" data-theme-icon aria-hidden="true"><use href="#i-auto"/></svg>
+            </button>
+
+            <button class="nav-toggle" type="button" data-drawer-open aria-haspopup="dialog" aria-label="Open navigation menu">
+                <svg class="icon" aria-hidden="true"><use href="#i-menu"/></svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<dialog class="drawer" id="nav-drawer" aria-label="Navigation">
+    <div class="drawer__head">
+        <span class="brand">Menu</span>
+        <button class="nav-toggle" type="button" data-drawer-close aria-label="Close navigation menu">
+            <svg class="icon" aria-hidden="true"><use href="#i-close"/></svg>
+        </button>
+    </div>
+    <ul class="drawer__list">
+        <li><a href="{% url 'main:index' %}" data-nav-link>Home</a></li>
+        <li><a href="{% url 'main:portfolio' %}" data-nav-link><svg class="icon" aria-hidden="true"><use href="#i-folder"/></svg>Portfolio</a></li>
+        <li><a href="{% url 'main:contact' %}" data-nav-link><svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg>Contact</a></li>
+    </ul>
+</dialog>

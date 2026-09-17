@@ -307,30 +307,185 @@ Worth doing before the Phase 3 redesign, so there is a baseline to compare again
 
 ## Phase 3 — Visual redesign (Materialize removal)
 
-Decided approach: custom CSS, no framework.
+**Status: complete (2026-09-16).** 18 tests passing; verified at 375px, 768px and 1280px in both
+light and dark, with zero contrast failures on every page in both schemes.
 
-- [ ] Define design tokens as CSS custom properties — keep the existing palette
-      (`#2A1B3D` / `#44318D` / `#D83F87` / `#A4B3B6`), fix the sub-4.5:1 pairs
-- [ ] Build a modular type scale and spacing rhythm
-- [ ] Rebuild components in custom CSS: navbar, card, collapsible, dropdown, toast
-- [ ] Rewrite the mobile nav as vanilla JS (`<dialog>` or a CSS-driven drawer)
-- [ ] Replace the carousel with a static hero, or drop it
-- [ ] Uniform card heights with `object-fit: cover` imagery
-- [ ] Real `:focus-visible` states throughout
-- [ ] Dark mode via `prefers-color-scheme`
-- [ ] Remove jQuery, Materialize CSS and Materialize JS entirely
-- [ ] Verify at 375px, 768px, 1440px in both color schemes
+- [x] Define design tokens as CSS custom properties, fixing the sub-4.5:1 pairs
+- [x] Build a modular type scale and spacing rhythm
+- [x] Rebuild components in custom CSS: navbar, card, accordion, menu, toast
+- [x] Rewrite the mobile nav as vanilla JS on `<dialog>`
+- [x] Replace the carousel with a CSS crossfade hero
+- [x] Uniform card heights with `object-fit: cover` imagery
+- [x] Real `:focus-visible` states throughout
+- [x] Dark mode via `prefers-color-scheme`
+- [x] Remove jQuery, Materialize CSS and Materialize JS entirely
+
+### What replaced what
+
+| Removed | Replaced by |
+|---|---|
+| `materialize.css` + `.map` (267 KB) | `app.css` (~20 KB) |
+| `custom.css` | folded into `app.css` |
+| Materialize JS + jQuery (CDN) | `app.js` (~4 KB) |
+| `portfolioLegend.js` | CSS; the legend is in normal flow |
+| Material Icons webfont | inline SVG sprite, 11 symbols |
+| Materialize collapsible | native `<details>` / `<summary>` |
+| Materialize sidenav | native `<dialog>` |
+| Materialize materialbox | native `<dialog>` lightbox |
+| Materialize toast | `app.js`, from server-rendered nodes |
+| Materialize carousel | two-frame CSS crossfade |
+| `col s12 m6 l4` grid | `grid-template-columns: repeat(auto-fill, minmax(...))` |
+
+Total CSS + JS is now **36 KB on disk**, against roughly 270 KB of stylesheet alone before, plus two
+CDN requests for jQuery and Materialize that no longer happen.
+
+### Palette
+
+The brand colours are kept. Two were measured failing and were split rather than replaced:
+
+- `#D83F87` stays as the decorative accent (borders, swatches, top rules).
+- `--accent-deep` `#C9306F` carries white text (5.08:1, was 4.22:1).
+- `--accent-text` `#E86AA5` is the accent as link text on dark (5.32:1, was 3.77:1).
+
+Dark mode swaps the page and surface tokens only; component rules are written against tokens, so
+nothing else changed.
+
+### Progressive enhancement
+
+The accordion is a native `<details>`, so the default section is expanded at first paint with no
+script. Nav items are plain links. Project cards are static markup. `app.js` adds the drawer, the
+filter menus, toasts and the lightbox, and the page is usable without any of them.
+
+### Three bugs found and fixed during the rebuild
+
+1. **Multi-line `{# #}` comments rendered literally.** Django's `{# #}` is single-line only; a
+   comment spanning lines is emitted verbatim into the HTML. Three had shipped into the templates.
+   Now `{% comment %}` blocks, with a test asserting no `{#` reaches the response.
+2. **`svg { display: block }` un-hid the icon sprite.** Author rules beat the user-agent sheet
+   regardless of specificity, so the reset overrode `[hidden] { display: none }` and the sprite took
+   150 px of layout above the header. Fixed with an explicit `[hidden]` rule.
+3. **Ghost buttons were near-invisible on the white filter bar**, having pinned a light text colour
+   that only read on dark surfaces. They now inherit colour from context.
+
+### Filtering
+
+Rewritten as a module. The Phase 4 items on OR semantics, chips, count, empty state and URL state
+came along with it, since the old file was being deleted anyway — see Phase 4 below.
+
+### Desktop centring pass (follow-up)
+
+Four alignment complaints after the rebuild, all from constrained-width blocks sitting against the
+left edge of a much wider container. Measured rather than eyeballed — the container itself was
+already centred; a first reading suggested otherwise only because `window.innerWidth` counts the
+15px scrollbar and `document.documentElement.clientWidth` does not.
+
+- Profile card (832px in a 1152px container) — `margin-inline: auto`.
+- Contact page — heading, lede and form now share one centred `.column`, so they align with each
+  other instead of each taking its own width from the left edge.
+- Project detail page — same `.column` treatment; screenshots get a wider `.gallery` since they are
+  the point of that page.
+- Project grid — the last row of a `repeat(auto-fill, ...)` grid hangs left, because the empty
+  tracks stay in place. Switched to a wrapping flex row with `justify-content: center`, so a short
+  final row centres under the ones above. Card heights stay uniform per row.
+- Legend — was a full-width bar holding 174px of content and no explanation of what the swatches
+  meant. Now a `fit-content` pill, centred, reading "Card color · Professional · Personal".
+
+### URL sync moved off the interaction path (follow-up)
+
+`Cannot read properties of undefined (reading 'startTime')` in `et.reportAllChanges`, thrown from a
+`VM`-numbered script, appeared while toggling filters. It reproduces in Incognito, so it is not an
+extension — `reportAllChanges` is the web-vitals API, which Chrome DevTools injects as part of its
+live performance metrics.
+
+**Cause, confirmed by bisection** (a switch was added to disable the History write; errors with it
+on, none with it off): Chrome's soft-navigation heuristics flag a single trusted interaction that
+both changes the URL via the History API and mutates the DOM. A filter click did exactly that.
+DevTools' instrumentation of that path is what throws.
+
+Two notes on how this was found, because the first two attempts were wrong:
+
+- Synthetic `element.click()` cannot reproduce it. Chrome's heuristics and INP measurement respond
+  only to *trusted* input, so every "no errors in a clean browser" result was meaningless. Later
+  runs used real input through the browser's own pipeline.
+- Debouncing the write did not help. Interaction context propagates through chained timers, so a
+  `setTimeout` scheduled from the handler is still attributed to the click.
+
+**Fix.** A click now only raises a flag. A reconciler started at page load — not a descendant of any
+interaction — notices the flag and writes the URL. The address bar behaves identically; there is no
+interaction for the heuristic to attribute the write to. Verified with real clicks:
+`writeHappenedInsideClickTask: false`, URL still tracks filters, shared links still restore, clear-all
+still empties the query string.
+
+`SYNC_URL_TO_FILTERS` remains at the top of the file as an escape hatch.
+
+### Card kind colours made prominent (follow-up)
+
+The Professional/Personal distinction was carried by a 4px top border in `#44318D`, which measures
+**1.56:1 against the dark card surface** — below the 3:1 WCAG 1.4.11 asks of non-text UI, and in
+practice invisible. Each kind now has two colours, because one cannot do both jobs:
+
+| | band / border (`--kind`) | tag fill (`--kind-fill`) |
+|---|---|---|
+| Personal | `#E84E96` — 5.96:1 on the card | `#C9306F` — 5.08:1 vs white text |
+| Professional | `#7C6BE0` — 5.03:1 on the card | `#44318D` — 10.15:1 vs white text |
+
+Applied as an 8px top band, a 2px border, and a 12% tint of the kind colour mixed into the card
+surface. The kind tag is filled rather than outlined, so the category is also stated in words — the
+two hues are far apart visually but close in luminance, so colour alone would not carry it for
+colour-blind readers.
+
+Verified in both schemes: zero contrast failures on the page, body text still 12:1+ on the tinted
+surfaces.
+
+### Theme toggle (follow-up)
+
+Dark mode previously followed the OS only. There is now a control in the header cycling
+**System → Light → Dark**. Three states rather than two, because with only a light/dark switch there
+is no way back to following the OS once a choice has been made.
+
+- The choice is stored in `localStorage` and cleared again when the cycle returns to System.
+- A small **inline, synchronous** script in `<head>` re-applies a stored choice before first paint.
+  A deferred or end-of-body script would run after the first paint and flash the light palette at
+  anyone who chose dark. A test asserts this script stays in `<head>`, ahead of `<body>`, with no
+  `defer`, `async` or `src`.
+- While in System mode the page tracks OS changes live via `matchMedia`, without a reload.
+- `<meta name="theme-color">` is updated to match, so mobile browser chrome follows the page.
+- The button is rendered `hidden` and revealed by `app.js`, so it is never a dead control without
+  JavaScript. A test covers that too.
+
+The dark palette now appears in two rules — `@media (prefers-color-scheme: dark)` scoped to
+`:root:not([data-theme="light"])`, and `:root[data-theme="dark"]`. They must be kept identical; the
+comment above them says so. The alternative, `light-dark()`, would remove the duplication but fails
+hard on older browsers, taking the whole palette with it.
+
+Two values that had their own `prefers-color-scheme` blocks (form field borders, error text) became
+tokens instead, so they follow the override automatically rather than needing their own rules.
+
+Verified: full cycle in both OS settings, an explicit light choice overriding an OS set to dark and
+surviving a reload, zero contrast failures under `[data-theme="dark"]` with the OS on light, and
+both header buttons at the 44px touch target on a 375px viewport with no overlap.
+
+### Follow-ups
+
+- [ ] The "Portfolio Website" project description still says *"Materialize was used for the base
+      CSS, and custom styling was applied as needed"*. No longer true; update the text in the admin.
+- [ ] `project_html.html` remains an empty stub, so a project with `html_project=True` renders a
+      title and description only. Still outstanding from the original audit.
 
 ## Phase 4 — Portfolio UX rebuild
 
-- [ ] OR semantics within a filter category; AND across categories
-- [ ] Active-filter chips with individual remove and a clear-all control
-- [ ] Result count ("Showing 5 of 8 projects")
-- [ ] Empty state with a clear-filters action
-- [ ] Sync filter state to the URL so filtered views are shareable
-- [ ] CSS transitions in place of jQuery animations
-- [ ] Rewrite `filterCards.js` as a module — no implicit globals, no `console.log`
-- [ ] Reposition the legend so it never overlaps content; add a non-color cue (icon or label)
+Most of this landed during Phase 3, because the file it lived in was being deleted.
+
+- [x] OR semantics within a filter category; AND across categories (Python + Mumps returns 6, was 1)
+- [x] Result count ("Showing 5 of 8 projects")
+- [x] Empty state with a clear-filters action
+- [x] Sync filter state to the URL so filtered views are shareable
+- [x] CSS transitions in place of jQuery animations
+- [x] Rewrite `filterCards.js` as a module — no implicit globals, no `console.log`
+- [x] Reposition the legend so it never overlaps content, and label each swatch in text
+- [ ] Active-filter chips with individual remove — the menu buttons show pressed state and there is
+      a clear-all, but there is no separate chip row summarising the active filters
+- [ ] Keyboard support inside the filter menus (arrow keys, focus wrap)
 
 ## Phase 5 — Content and IA
 

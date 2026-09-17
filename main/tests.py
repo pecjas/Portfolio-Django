@@ -83,12 +83,56 @@ class PageSmokeTests(TestCase):
 
         self.assertRegex(
             response.content.decode(),
-            r'href="/static/main/css/materialize\.css\?v=\d+"')
+            r'href="/static/main/css/app\.css\?v=\d+"')
 
-    def test_active_collapsible_section_opens_without_javascript(self):
+    def test_default_accordion_section_opens_without_javascript(self):
+        """It is a native <details open>, so it is expanded before any JS runs."""
         response = self.client.get(reverse("main:index"))
 
-        self.assertContains(response, '<li class="active">')
+        self.assertContains(response, '<details class="accordion__item" open>')
+
+    def test_theme_preference_is_applied_before_first_paint(self):
+        """The inline script must be in <head>, ahead of <body>, and not deferred.
+
+        A deferred or body-end script would run after the first paint, flashing
+        the light palette at anyone who chose dark.
+        """
+        html = self.client.get(reverse("main:index")).content.decode()
+
+        script_at = html.index('localStorage.getItem("theme")')
+        self.assertLess(script_at, html.index("<body>"))
+
+        opening_tag = html.rindex("<script", 0, script_at)
+        tag = html[opening_tag:html.index(">", opening_tag)]
+        self.assertNotIn("defer", tag)
+        self.assertNotIn("async", tag)
+        self.assertNotIn("src=", tag)
+
+    def test_theme_toggle_is_hidden_until_scripted(self):
+        """It does nothing without JS, so it should not be offered without JS."""
+        html = self.client.get(reverse("main:index")).content.decode()
+
+        self.assertIn("data-theme-toggle", html)
+        toggle_at = html.index("data-theme-toggle")
+        tag = html[html.rindex("<button", 0, toggle_at):html.index(">", toggle_at)]
+        self.assertIn("hidden", tag)
+
+    def test_no_framework_assets_remain(self):
+        response = self.client.get(reverse("main:index"))
+        html = response.content.decode()
+
+        for gone in ["materialize", "jquery", "fonts.googleapis.com"]:
+            self.assertNotIn(gone, html.lower())
+
+    def test_templates_emit_no_literal_template_comments(self):
+        """Django's {# #} is single-line; a multi-line one renders verbatim."""
+        for url in [
+            reverse("main:index"),
+            reverse("main:portfolio"),
+            reverse("main:contact"),
+        ]:
+            with self.subTest(url=url):
+                self.assertNotIn("{#", self.client.get(url).content.decode())
 
     def test_unknown_project_returns_404(self):
         response = self.client.get(reverse("main:project", kwargs={"slug": "does-not-exist"}))

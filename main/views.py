@@ -49,7 +49,9 @@ def portfolio(request):
         allProjects.update({project: {
             'image': image,
             'filterLang': filter_lang,
-            'filterPersonalStatus': filter_personal_status
+            'filterPersonalStatus': filter_personal_status,
+            # Display names, as opposed to filterLang's underscored filter keys.
+            'languageList': [lang for lang in project.language.split(', ') if lang]
         }})
 
     language_choices = {}

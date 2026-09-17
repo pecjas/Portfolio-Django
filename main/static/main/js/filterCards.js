@@ -1,156 +1,199 @@
-var CARD_COLS
-var FILTER_STATES = {}
-var CACHED_SELECTION = []
-/*
-    filterList: An object with keys of the filter types as they'll appear in element.dataset
-        and values of space delimited list of possible options
-*/
-function initializeCardFilters(filterList) {
-    filterList = JSON.parse(filterList)
-    
-    $(document).ready(getAllCards())
-    initializeFilterStates(filterList)
-}
+/* Project filtering. Replaces the jQuery implementation.
 
-function getAllCards() {
-    CARD_COLS = $("#cardContainer").children()
-}
+   Semantics: OR within a category, AND across categories. Selecting Python and
+   Mumps shows projects using either, which is what a faceted filter is expected
+   to do; the previous version intersected them and narrowed to projects using
+   both. */
 
-function initializeFilterStates(filterList) {
-    for (var typeKey in filterList) {       
-        typeOptions = filterList[typeKey]
-        typeOptions = typeOptions.split(" ")        
-        
-        FILTER_STATES[typeKey] = {}
+(function () {
+  "use strict";
 
-        for (var optionKey in typeOptions) {
-            FILTER_STATES[typeKey][typeOptions[optionKey]] = false
-        };
-    };
-}
+  /* Escape hatch: set false to stop the filters touching the History API at
+     all. Filters still apply and shared links still load; the address bar just
+     stops tracking them. See the reconciler below for why it should not be
+     needed. */
+  var SYNC_URL_TO_FILTERS = true;
 
-/*
-    filterType: data attribute as it would appear in element.dataset
-    filterSelection:  the relevant attribute value to update
-*/
-function updateFilters(filterType, filterSelection) {
-    FILTER_STATES[filterType][filterSelection] = !FILTER_STATES[filterType][filterSelection]
-    updateOptionColor(filterType, filterSelection)
+  /* How often the reconciler checks whether the URL has fallen behind. */
+  var URL_RECONCILE_MS = 600;
 
-    if (FILTER_STATES[filterType][filterSelection]) {
-        CACHED_SELECTION = [filterType, filterSelection]
-        CARD_COLS.each(function (index) {
-            applyNewFilterToAllRelevantElements(index)})
+  var CATEGORIES = ["data-filter-lang", "data-filter-personal-status"];
 
-    } else if (noFiltersApplied()) {
-        unfilter_all_cards()
+  var cards = [];
+  var selected = {};
+  var elements = {};
 
+  function selectedIn(category) {
+    return selected[category] || [];
+  }
+
+  function cardMatches(card, category) {
+    var chosen = selectedIn(category);
+    if (!chosen.length) return true;
+
+    var values = (card.getAttribute(category) || "").split(" ");
+
+    return chosen.some(function (value) {
+      return values.indexOf(value) !== -1;
+    });
+  }
+
+  function visibleCards() {
+    return cards.filter(function (card) {
+      return CATEGORIES.every(function (category) {
+        return cardMatches(card, category);
+      });
+    });
+  }
+
+  function render() {
+    var shown = visibleCards();
+
+    cards.forEach(function (card) {
+      card.hidden = shown.indexOf(card) === -1;
+    });
+
+    if (elements.count) {
+      elements.count.textContent = shown.length === cards.length
+        ? "Showing all " + cards.length + " projects"
+        : "Showing " + shown.length + " of " + cards.length + " projects";
+    }
+
+    if (elements.empty) elements.empty.hidden = shown.length !== 0;
+
+    if (elements.clear) {
+      elements.clear.hidden = CATEGORIES.every(function (category) {
+        return selectedIn(category).length === 0;
+      });
+    }
+
+    document.querySelectorAll("[data-filter-value]").forEach(function (button) {
+      var category = button.dataset.filterCategory;
+      var isOn = selectedIn(category).indexOf(button.dataset.filterValue) !== -1;
+      button.setAttribute("aria-pressed", String(isOn));
+    });
+  }
+
+  function toggle(category, value) {
+    var chosen = selectedIn(category);
+    var at = chosen.indexOf(value);
+
+    if (at === -1) {
+      chosen.push(value);
     } else {
-        reevaluateAllFilters()
-    }
-}
-
-function updateOptionColor(filterType, filterSelection) {
-    elementID = filterType.concat("-",filterSelection)
-    $("#" + elementID).toggleClass('filtered')
-}
-
-function applyNewFilterToAllRelevantElements(index) {
-    filterType = CACHED_SELECTION[0]
-    filterSelection = CACHED_SELECTION[1]  
-    
-    if (!$(CARD_COLS[index]).attr(filterType).split(" ").includes(filterSelection)) {
-        applyOrRemoveFilterClass(CARD_COLS[index], true)
-    }
-}
-
-function unfilter_all_cards() {
-    CARD_COLS.each( function (index) {
-        removeFilterClass(CARD_COLS[index])
-    })
-}
-
-function noFiltersApplied() {
-    noFilterExists = true
-
-    for (var filterTypeKey in FILTER_STATES) {
-        for (var stateKey in FILTER_STATES[filterTypeKey]) {       
-
-            noFilterExists = !FILTER_STATES[filterTypeKey][stateKey]
-            if (!noFilterExists) {break}
-        }
-
-        if (!noFilterExists) {break}
+      chosen.splice(at, 1);
     }
 
-    return noFilterExists
-}
+    selected[category] = chosen;
+    render();
+    syncUrl();
+  }
 
-function reevaluateAllFilters() {
-    var cardsToShow = CARD_COLS.toArray() //Show all by default
-    console.log("Reevaluate all filters");
+  function clearAll() {
+    CATEGORIES.forEach(function (category) {
+      selected[category] = [];
+    });
+    render();
+    syncUrl();
+  }
 
-    for (var typeKey in FILTER_STATES) {
+  /* Filter state lives in the URL so a filtered view can be shared or reloaded.
 
-        for (var stateKey in FILTER_STATES[typeKey]) {    
-            cardsToShow = reevaluateFilter(typeKey, stateKey, cardsToShow)
-        }
+     The write deliberately does not happen in the click's task, nor in a timer
+     started from it. Chrome's soft-navigation heuristics flag one trusted
+     interaction that both changes the URL via the History API and mutates the
+     DOM, and that interaction context propagates through chained timers — so a
+     debounce scheduled from the handler is still attributed to the click.
+     DevTools' live performance metrics instrument that path and throw
+     "Cannot read properties of undefined (reading 'startTime')" on it.
+     Confirmed by bisection: errors with the write on the click path, none
+     without it.
+
+     So a click only raises a flag. A reconciler rooted at page load — not a
+     descendant of any interaction — notices the flag and writes the URL. Same
+     address bar, no interaction for the heuristic to attribute it to. */
+
+  var urlDirty = false;
+
+  function currentQuery() {
+    var params = new URLSearchParams();
+
+    if (selectedIn("data-filter-lang").length) {
+      params.set("lang", selectedIn("data-filter-lang").join(","));
+    }
+    if (selectedIn("data-filter-personal-status").length) {
+      params.set("kind", selectedIn("data-filter-personal-status").join(","));
     }
 
-    for (var i=0 ; i<CARD_COLS.length ; i++) {
-        
-        if (cardsToShow.includes(CARD_COLS[i])) {
-            applyOrRemoveFilterClass(CARD_COLS[i], false)
+    return params.toString();
+  }
 
-        } else {
-            applyOrRemoveFilterClass(CARD_COLS[i], true)
-        }
+  function writeUrl() {
+    if (!SYNC_URL_TO_FILTERS) return;
+
+    var query = currentQuery();
+    var next = query ? "?" + query : window.location.pathname;
+
+    if (next === window.location.search || (!query && !window.location.search)) return;
+
+    history.replaceState(null, "", next);
+  }
+
+  function syncUrl() {
+    urlDirty = true;
+  }
+
+  function startUrlReconciler() {
+    if (!SYNC_URL_TO_FILTERS) return;
+
+    // Rooted here, at load — never inside a click handler.
+    window.setInterval(function () {
+      if (!urlDirty) return;
+
+      urlDirty = false;
+      writeUrl();
+    }, URL_RECONCILE_MS);
+  }
+
+  function readUrl() {
+    if (!SYNC_URL_TO_FILTERS) {
+      selected["data-filter-lang"] = [];
+      selected["data-filter-personal-status"] = [];
+      return;
     }
-}
 
-function reevaluateFilter(typeKey, stateKey, cardsToShow) {
-    var newCardsToShow = []   
-    
-    if (FILTER_STATES[typeKey][stateKey]) {
-        for (var index in cardsToShow) {      
+    var params = new URLSearchParams(window.location.search);
 
-            if ($(cardsToShow[index]).attr(typeKey).split(" ").includes(stateKey)) {
-                newCardsToShow.push(cardsToShow[index])
-            }
-        }
-    }
+    selected["data-filter-lang"] = (params.get("lang") || "").split(",").filter(Boolean);
+    selected["data-filter-personal-status"] = (params.get("kind") || "").split(",").filter(Boolean);
+  }
 
-    return newCardsToShow.length>0 ? newCardsToShow : cardsToShow
-}
+  function init() {
+    var container = document.getElementById("cardContainer");
+    if (!container) return;
 
-function hideCardIfNecessary(element, typeKey, stateKey) {
-    if ($(element).attr(typeKey).split(" ").includes(stateKey)) {
-        applyOrRemoveFilterClass(element, true)
-    }
-}
+    cards = Array.prototype.slice.call(container.querySelectorAll("[data-filter-lang]"));
+    elements.count = document.getElementById("filter-count");
+    elements.empty = document.getElementById("filter-empty");
+    elements.clear = document.getElementById("filter-clear");
 
-function showCardIfNecessary(element, typeKey, stateKey) {
-    if ($(element).attr(typeKey).split(" ").includes(stateKey)) {
-        applyOrRemoveFilterClass(element, false)
-    }
-}
+    readUrl();
 
-function isFiltered(typeKey, stateKey) {
-    return FILTER_STATES[typeKey][stateKey]
-}
+    document.querySelectorAll("[data-filter-value]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        toggle(button.dataset.filterCategory, button.dataset.filterValue);
+      });
+    });
 
-function applyOrRemoveFilterClass(element, shouldFilter) {
-    if (shouldFilter) {
-        applyFilterClass(element)
-    } else {
-        removeFilterClass(element)
-    }
-}
+    if (elements.clear) elements.clear.addEventListener("click", clearAll);
 
-function applyFilterClass(element) {
-    $(element).hide(1000)
-}
+    startUrlReconciler();
+    render();
+  }
 
-function removeFilterClass(element) {
-    $(element).show(1000)
-}
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();

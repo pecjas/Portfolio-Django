@@ -4,113 +4,104 @@
 {% block content %}
 <h1 class="sr-only">Jason Peck - Software Developer</h1>
 
-<!-- Decorative name banner: the text it renders is already in the h1 above. -->
-<div class="carousel carousel-slider no-autoinit" aria-hidden="true">
-        <span class="carousel-item">
-            <picture>
-                <source type="image/webp" sizes="100vw"
-                        srcset="{% static 'main/img/Jason-800w.webp' %} 800w,
-                                {% static 'main/img/Jason-1200w.webp' %} 1200w,
-                                {% static 'main/img/Jason.webp' %} 2000w">
-                <img src="{% static 'main/img/Jason.png' %}" alt="" width="2000" height="215">
-            </picture>
-        </span>
-        <span class="carousel-item">
-            <picture>
-                <source type="image/webp" sizes="100vw"
-                        srcset="{% static 'main/img/Developer-800w.webp' %} 800w,
-                                {% static 'main/img/Developer-1200w.webp' %} 1200w,
-                                {% static 'main/img/Developer.webp' %} 2000w">
-                <img src="{% static 'main/img/Developer.png' %}" alt="" width="2000" height="215">
-            </picture>
-        </span>
+{% comment %}Decorative name banner. The two frames crossfade in CSS; the
+text they render is already in the h1 above, so both are aria-hidden.{% endcomment %}
+<div class="hero" aria-hidden="true">
+    <picture class="hero__frame hero__frame--a">
+        <source type="image/webp" sizes="100vw"
+                srcset="{% static 'main/img/Jason-800w.webp' %} 800w,
+                        {% static 'main/img/Jason-1200w.webp' %} 1200w,
+                        {% static 'main/img/Jason.webp' %} 2000w">
+        <img src="{% static 'main/img/Jason.png' %}" alt="" width="2000" height="215" fetchpriority="high">
+    </picture>
+    <picture class="hero__frame hero__frame--b">
+        <source type="image/webp" sizes="100vw"
+                srcset="{% static 'main/img/Developer-800w.webp' %} 800w,
+                        {% static 'main/img/Developer-1200w.webp' %} 1200w,
+                        {% static 'main/img/Developer.webp' %} 2000w">
+        <img src="{% static 'main/img/Developer.png' %}" alt="" width="2000" height="215">
+    </picture>
 </div>
-<div class="container">
-<br>
-<div class="col s12 m7">
-    <div class="card horizontal dark-purple white-text">
-        <div class="card-image">
-        <picture>
-            <source type="image/webp" srcset="{% static 'main/img/jasonpeck.webp' %}">
-            <img src="{% static 'main/img/jasonpeck.png' %}" alt="Portrait of Jason Peck" width="300" height="450">
-        </picture>
+
+<div class="container section stack">
+    <article class="card profile-card">
+        <div class="profile-card__photo">
+            <picture>
+                <source type="image/webp" srcset="{% static 'main/img/jasonpeck.webp' %}">
+                <img src="{% static 'main/img/jasonpeck.png' %}" alt="Portrait of Jason Peck" width="300" height="450">
+            </picture>
         </div>
-        <div class="card-stacked">
-        <div class="card-content valign-wrapper">
-            <p class="flow-text">
+        <div class="profile-card__body">
+            <p>
                 I have been writing and reviewing code professionally in the electronic medical record industry since June 2017. Programming is also
                 a personal hobby of mine, leading me to experimented with a number of programming languages and projects. To see examples of my work, visit the
-                <a class="hot-pink-text" href="{% url 'main:portfolio' %}">portfolio page</a>.
+                <a href="{% url 'main:portfolio' %}">portfolio page</a>.
             </p>
         </div>
-        </div>
+    </article>
+
+    <div class="accordion">
+        <details class="accordion__item" open>
+            <summary class="accordion__summary">
+                <svg class="icon" aria-hidden="true"><use href="#i-work"/></svg>
+                <h2 class="heading-in-summary">Experience</h2>
+                <svg class="icon accordion__chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </summary>
+            <div class="accordion__panel">
+                <ul class="entries">
+                    {% for job, detailList in jobs.items %}
+                    <li class="entry">
+                        <h3 class="entry__title">{{ job.title }}</h3>
+                        <p class="entry__org">{{ job.employer }}</p>
+                        <p class="entry__dates">{{ job.startDate }} &ndash; {% if job.endDate is none %}Present{% else %}{{ job.endDate }}{% endif %}</p>
+                        <ul class="entry__points">
+                            {% for detail in detailList %}
+                            <li>{{ detail.content }}</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </details>
+
+        <details class="accordion__item">
+            <summary class="accordion__summary">
+                <svg class="icon" aria-hidden="true"><use href="#i-school"/></svg>
+                <h2 class="heading-in-summary">Education</h2>
+                <svg class="icon accordion__chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </summary>
+            <div class="accordion__panel">
+                <ul class="entries">
+                    {% for edu in education %}
+                    <li class="entry">
+                        <h3 class="entry__title">{{ edu.degree }}</h3>
+                        <p class="entry__org">{{ edu.school }}</p>
+                        <p class="entry__dates">{{ edu.graduationDate }}</p>
+                        <ul class="entry__points">
+                            <li>Overall GPA: {{ edu.GPA }}/4.000</li>
+                            {% if edu.additionalInfo %}<li>{{ edu.additionalInfo }}</li>{% endif %}
+                        </ul>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </details>
+
+        <details class="accordion__item">
+            <summary class="accordion__summary">
+                <svg class="icon" aria-hidden="true"><use href="#i-star"/></svg>
+                <h2 class="heading-in-summary">Skills</h2>
+                <svg class="icon accordion__chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </summary>
+            <div class="accordion__panel">
+                <ul class="skills">
+                    {% for skill in skills %}
+                    <li>{{ skill }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </details>
     </div>
 </div>
-<div class="row">
-    <ul class="collapsible popout">
-        <li class="active">
-            <div class="collapsible-header dark-purple white-text"><i class="material-icons" aria-hidden="true">work</i><h2 class="heading-inline">Experience</h2></div>
-                <div class="collapsible-body dark-purple">
-                    {% for job, detailList in jobs.items %}
-                    <ul class="collection with-header">
-                        <li class="collection-header dark-purple white-text hot-pink-border"><h3 class="heading-entry">{{job.title}}</h3><p style="font-size:large">{{job.employer}}</p><span class="grey-purple-text">{{job.startDate}} - {% if job.endDate is none%}Present{% else %}{{job.endDate}}{% endif %}</span></li>
-                        {% for detail in detailList %}
-                        <li class="collection-item dark-purple white-text hot-pink-border">{{detail.content}}</li>
-                        {% endfor %}
-                    </ul>
-                    {% endfor %}
-            </div>
-        </li>
-        <li>
-            <div class="collapsible-header dark-purple white-text"><i class="material-icons" aria-hidden="true">school</i><h2 class="heading-inline">Education</h2></div>
-            <div class="collapsible-body dark-purple">
-                {% for edu in education %}
-                <ul class="collection with-header">
-                    <li class="collection-header dark-purple white-text hot-pink-border"><h3 class="heading-entry">{{edu.degree}}</h3><p style="font-size:large">{{edu.school}}</p><span class="grey-purple-text">{{edu.graduationDate}}</span></li>
-                    <li class="collection-item dark-purple white-text hot-pink-border">Overall GPA: {{edu.GPA}}/4.000<br/>{{edu.additionalInfo}}</li>
-                </ul>
-                {% endfor %}
-            </div>
-        </li>
-        <li>
-            <div class="collapsible-header dark-purple white-text"><i class="material-icons" aria-hidden="true">star</i><h2 class="heading-inline">Skills</h2></div>
-            <div class="collapsible-body dark-purple">
-                <table class="dark-purple white-text fixed-table centered">
-                    <caption class="sr-only">Technical skills</caption>
-                    {% for skill in skills %}
-                    {% if forloop.counter0|divisibleby:"2" %}
-                    <tr class="hot-pink-border">
-                    {% endif %}
-                        <td>{{skill}}
-                    {% endfor %}
-                    {% if not skills|length|divisibleby:"2" %}<td>{% endif %}
-                </table>
-            </div>
-        </li>
-    </ul>
-</div>
-</div>
-{% endblock %}
-
-{% block extra_body %}
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var carouselSlider = document.querySelectorAll('.carousel');
-        var options = {
-            fullWidth: true,
-            duration: 75,
-        }
-
-    var instances = M.Carousel.init(carouselSlider, options);
-
-    setInterval(nextCarouselItem, 3000);
-
-    function nextCarouselItem() {
-      var elem = document.querySelector('.carousel');
-      var el = M.Carousel.getInstance(elem);
-
-      el.next();
-  }
-  });
-</script>
 {% endblock %}
