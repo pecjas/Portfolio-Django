@@ -1,13 +1,31 @@
+{% load static versioned_static %}<!DOCTYPE html>
+<html lang="en">
 <head>
-    {% load static %}
     {{ google_analytics_head_info|safe|default:"" }}
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="author" content="Jason Peck">
-    <meta name="description" content="This is my software development portfolio project. It includes 
-    information about my experience and sample projects in languages including Python, JavaScript, 
-    HTML, and SQL.">
+
+    {% with meta_title=page_title|default:"Jason Peck - Software Developer" meta_description=page_description|default:"The software development portfolio of Jason Peck, covering professional experience and sample projects in Python, JavaScript, HTML and SQL." %}
+    <title>{{ meta_title }}</title>
+    <meta name="description" content="{{ meta_description }}">
+    <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
+
+    <!-- Open Graph / Twitter card -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Jason Peck">
+    <meta property="og:title" content="{{ meta_title }}">
+    <meta property="og:description" content="{{ meta_description }}">
+    <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'main/img/jasonpeck.png' %}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ meta_title }}">
+    <meta name="twitter:description" content="{{ meta_description }}">
+    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'main/img/jasonpeck.png' %}">
+    {% endwith %}
+
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="{% static 'main/css/materialize.css' %}" rel="stylesheet">
+    <link href="{% versioned_static 'main/css/materialize.css' %}" rel="stylesheet">
 
     <!--Favicon code -->
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'main/img/favicon/apple-touch-icon.png' %}">
@@ -22,10 +40,9 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://www.google.com/recaptcha/api.js"></script>
-    <script src="{% static 'main/js/filterCards.js' %}"></script>
-    <script src="{% static 'main/js/portfolioLegend.js' %}"></script>
-    <title>Jason Peck - Portfolio</title>
+    {% block extra_head %}{% endblock %}
+    <script src="{% versioned_static 'main/js/filterCards.js' %}"></script>
+    <script src="{% versioned_static 'main/js/portfolioLegend.js' %}"></script>
 </head>
 
 <body>
@@ -33,12 +50,13 @@
     {% include "main/includes/navbar.html" %}
     {% include "main/includes/messages.html" %}
 
-    <div class="container">
-        <br>
+    <main id="main-content">
         {% block content %}
         {% endblock %}
-    </div>
+    </main>
+
+    <script>M.AutoInit();</script>
+    {% block extra_body %}{% endblock %}
 
 </body>
-
-<script>M.AutoInit();</script>
+</html>

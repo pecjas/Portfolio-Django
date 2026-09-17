@@ -1,16 +1,16 @@
 <nav>
     <div class="nav-wrapper">
-        <a href="/" class="brand-logo grey-purple-text">Jason Peck</a>
-        <a href="#" data-target="mobile-menu" class="sidenav-trigger"><i class="material-icons grey-purple-text">menu</i></a>
+        <a href="{% url 'main:index' %}" class="brand-logo grey-purple-text">Jason Peck</a>
+        <a href="#mobile-menu" data-target="mobile-menu" class="sidenav-trigger" aria-label="Open navigation menu"><i class="material-icons grey-purple-text" aria-hidden="true">menu</i></a>
         <ul class="right hide-on-med-and-down">
-            <li style="width: 115px;"><nobr><a href="/portfolio" class="grey-purple-text"><i class="material-icons right grey-purple-text">folder</i>Portfolio</a></nobr></li>
-            <li style="width: 112px;"><nobr><a href="/contact" class="grey-purple-text"><i class="material-icons right grey-purple-text">contact_mail</i>Contact</a></nobr></li>
+            <li style="width: 115px;"><nobr><a href="{% url 'main:portfolio' %}" class="grey-purple-text"><i class="material-icons right grey-purple-text" aria-hidden="true">folder</i>Portfolio</a></nobr></li>
+            <li style="width: 112px;"><nobr><a href="{% url 'main:contact' %}" class="grey-purple-text"><i class="material-icons right grey-purple-text" aria-hidden="true">contact_mail</i>Contact</a></nobr></li>
         </ul>
     </div>
 </nav>
 
 <ul class="sidenav medium-purple" id="mobile-menu">
-    <li><a href="/" class="grey-purple-text">Home</a></li>
-    <li><a href="/portfolio" class="grey-purple-text">Portfolio</a></li>
-    <li><a href="/contact" class="grey-purple-text">Contact</a></li>
+    <li><a href="{% url 'main:index' %}" class="grey-purple-text">Home</a></li>
+    <li><a href="{% url 'main:portfolio' %}" class="grey-purple-text">Portfolio</a></li>
+    <li><a href="{% url 'main:contact' %}" class="grey-purple-text">Contact</a></li>
 </ul>

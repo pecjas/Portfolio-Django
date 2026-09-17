@@ -9,5 +9,8 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('portfolio/', views.portfolio, name='portfolio'),
     path('contact/', views.contact, name='contact'),
-    path('project/', views.project, name='project')
+    path('projects/<slug:slug>/', views.project, name='project'),
+
+    # Kept so links shared before the move to slugs still resolve.
+    path('project/', views.legacy_project_redirect, name='legacy_project'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

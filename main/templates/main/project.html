@@ -1,14 +1,15 @@
 {% extends "main/header.html" %}
 
 {% block content %}
-<h2 class="center-align dark-purple-text">{{project}}</h2>
+<div class="container">
+<h1 class="center-align dark-purple-text">{{ project.title }}</h1>
 <div class="dark-purple-text"><strong style="font-size: large;">Language: </strong><span>{{project.language}}</span></div>
 {% if project.githubLink != None %}
-<div class="dark-purple-text"><strong style="font-size:large;">Github Link: </strong><a class="dark-purple-text" href="{{project.githubLink}}">{{project.githubLink}}</a></div>
+<div class="dark-purple-text"><strong style="font-size:large;">Github Link: </strong><a class="dark-purple-text" href="{{project.githubLink}}" rel="noopener noreferrer">{{project.githubLink}}</a></div>
 {% endif %}
 <div class="dark-purple-text"><strong style="font-size: large;">Description: </strong><blockquote class="dark-purple-text">{{ project.content|linebreaks }}</blockquote></div>
 
 {% block project_content %}
 {% endblock %}
-
+</div>
 {% endblock %}

@@ -4,6 +4,8 @@ from .models import Project, ProjectImage, Job, JobDetail, Education, Skill
 
 class ProjectAdmin(admin.ModelAdmin):
     form = ProjectForm
+    prepopulated_fields = {"slug": ("title",)}
+
     def save_model(self, request, obj, form, change):
         translation_table = dict.fromkeys(map(ord, "'[]"), None)
         obj.language = obj.language.translate(translation_table)

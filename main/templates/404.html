@@ -1,0 +1,12 @@
+{% extends "main/header.html" %}
+
+{% block content %}
+<div class="container center-align">
+    <h1 class="dark-purple-text">Page not found</h1>
+    <p class="lede dark-purple-text">The page you were looking for doesn't exist, or it has moved.</p>
+    <br>
+    <a class="btn waves-effect waves-light medium-purple white-text" href="{% url 'main:index' %}">Back to home</a>
+    <a class="btn waves-effect waves-light dark-purple white-text" href="{% url 'main:portfolio' %}">View the portfolio</a>
+    <br><br>
+</div>
+{% endblock %}

@@ -2,6 +2,8 @@
 {% load static %}
 
 {% block content %}
+<div class="container">
+<h1 class="center-align dark-purple-text">Portfolio</h1>
 <div class="card div-fixed" id="legend">
     <div class="box dark-purple div-fixed-item"></div><div class="div-fixed-item">Professional</div>
     <div class="box hot-pink div-fixed-item"></div><div class="div-fixed-item">Personal</div>
@@ -37,20 +39,20 @@
             <div class="card-image valign-wrapper dark-purple darken" style="height: 280px">
         {% endif %}
         {% if projDetails.image == None %}
-                <img class="activator" src="{% static defaultImage %}" style="max-height: 100%">
+                <img class="activator" src="{% static defaultImage %}" style="max-height: 100%" alt="">
             </div>
         {% else %}
-                <img class="activator" src="{{ projDetails.image }}" style="max-height: 100%">
+                <img class="activator" src="{{ projDetails.image }}" style="max-height: 100%" alt="Preview image for {{ project.title }}">
             </div>
         {% endif %}
             <div class="card-content white-text activator">
-                <div class="card-title activator"><strong class="activator">{{project.title}}</strong></div>
+                <h2 class="card-title activator heading-reset"><strong class="activator">{{project.title}}</strong></h2>
                 <div class="activator" style="padding-bottom: 4px;">
-                    <span class="activator"><strong class="activator">Brief Description</strong><i class="material-icons right">expand_less</i></span>
+                    <span class="activator"><strong class="activator">Brief Description</strong><i class="material-icons right" aria-hidden="true">expand_less</i></span>
                 </div>
-                <p style="padding-bottom: 4px;" class="activator"><strong class="activator">Language: </strong>{% for lang in project.language %}{{lang}}{% endfor %}</p>  
+                <p style="padding-bottom: 4px;" class="activator"><strong class="activator">Language: </strong>{% for lang in project.language %}{{lang}}{% endfor %}</p>
                 <div class="card-action center-align" style="max-height: 2%;">
-                    <a style="color:white; max-height: 2%;" href="/project/?id={{project}}">View Full Page</a>
+                    <a style="color:white; max-height: 2%;" href="{% url 'main:project' project.slug %}">View Full Page</a>
                 </div>
             </div>
             {% if project.githubLink != None %}
@@ -58,15 +60,19 @@
             {% else %}
             <div class="card-reveal dark-purple white-text">
             {% endif %}
-                <span class="card-title">{{project.title}}<i class="material-icons right">expand_more</i></span>
+                <span class="card-title">{{project.title}}<i class="material-icons right" aria-hidden="true">expand_more</i></span>
                 <p>{{project.briefDescription}}</p>
             </div>
         </div>
     </div>
     {% endfor %}
 </div>
+</div>
 {{ filterList|json_script:"available-filters" }}
-<script>    
+{% endblock %}
+
+{% block extra_body %}
+<script>
     initializeCardFilters(JSON.parse(document.getElementById('available-filters').textContent))
     initializeLegend();
 </script>

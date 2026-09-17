@@ -2,6 +2,8 @@ from django.db import models
 from django.db.models.query_utils import Q
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from django.urls import reverse
+from django.utils.text import slugify
 
 class Job(models.Model):
     employer = models.CharField(max_length=200)
@@ -37,6 +39,7 @@ class Skill(models.Model):
 
 class Project(models.Model):
     title = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=220, unique=True, blank=True)
     briefDescription = models.CharField(max_length=500, verbose_name="Brief Description")
     content = models.TextField()
 
@@ -64,6 +67,27 @@ class Project(models.Model):
 
     language = models.CharField(default=ProgramLanguage.Unspecified,
                                 max_length=200)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self._build_unique_slug()
+
+        super().save(*args, **kwargs)
+
+    def _build_unique_slug(self):
+        base = slugify(self.title) or "project"
+        slug = base
+        suffix = 2
+
+        taken = Project.objects.exclude(pk=self.pk)
+        while taken.filter(slug=slug).exists():
+            slug = f"{base}-{suffix}"
+            suffix += 1
+
+        return slug
+
+    def get_absolute_url(self):
+        return reverse("main:project", kwargs={"slug": self.slug})
 
     def __str__(self):
         return self.title

@@ -2,10 +2,12 @@
 {% load static %}
 
 {% block content %}
-</div>
-<div class="carousel carousel-slider no-autoinit">
-        <a class="carousel-item"><img src="{% static 'main/img/Jason.png' %}"></a>
-        <a class="carousel-item"><img src="{% static 'main/img/Developer.png' %}"></a>
+<h1 class="sr-only">Jason Peck - Software Developer</h1>
+
+<!-- Decorative name banner: the text it renders is already in the h1 above. -->
+<div class="carousel carousel-slider no-autoinit" aria-hidden="true">
+        <span class="carousel-item"><img src="{% static 'main/img/Jason.png' %}" alt=""></span>
+        <span class="carousel-item"><img src="{% static 'main/img/Developer.png' %}" alt=""></span>
 </div>
 <div class="container">
     <br>
@@ -14,14 +16,14 @@
 <div class="col s12 m7">
     <div class="card horizontal dark-purple white-text">
         <div class="card-image">
-        <img src="{% static 'main/img/jasonpeck.png' %}">
+        <img src="{% static 'main/img/jasonpeck.png' %}" alt="Portrait of Jason Peck">
         </div>
         <div class="card-stacked">
         <div class="card-content valign-wrapper">
             <p class="flow-text">
                 I have been writing and reviewing code professionally in the electronic medical record industry since June 2017. Programming is also
                 a personal hobby of mine, leading me to experimented with a number of programming languages and projects. To see examples of my work, visit the
-                <a class="hot-pink-text" href="/portfolio">portfolio page</a>.
+                <a class="hot-pink-text" href="{% url 'main:portfolio' %}">portfolio page</a>.
             </p>
         </div>
         </div>
@@ -30,11 +32,11 @@
 <div class="row">
     <ul class="collapsible popout">
         <li class="active">
-            <div class="collapsible-header dark-purple white-text"><i class="material-icons">work</i>Experience</div>
+            <div class="collapsible-header dark-purple white-text"><i class="material-icons" aria-hidden="true">work</i><h2 class="heading-inline">Experience</h2></div>
                 <div class="collapsible-body dark-purple">
                     {% for job, detailList in jobs.items %}
                     <ul class="collection with-header">
-                        <li class="collection-header dark-purple white-text hot-pink-border"><h4>{{job.title}}</h4><p style="font-size:large">{{job.employer}}</p><span class="grey-purple-text">{{job.startDate}} - {% if job.endDate is none%}Present{% else %}{{job.endDate}}{% endif %}</span></li>
+                        <li class="collection-header dark-purple white-text hot-pink-border"><h3 class="heading-entry">{{job.title}}</h3><p style="font-size:large">{{job.employer}}</p><span class="grey-purple-text">{{job.startDate}} - {% if job.endDate is none%}Present{% else %}{{job.endDate}}{% endif %}</span></li>
                         {% for detail in detailList %}
                         <li class="collection-item dark-purple white-text hot-pink-border">{{detail.content}}</li>
                         {% endfor %}
@@ -43,20 +45,21 @@
             </div>
         </li>
         <li>
-            <div class="collapsible-header dark-purple white-text"><i class="material-icons">school</i>Education</div>
+            <div class="collapsible-header dark-purple white-text"><i class="material-icons" aria-hidden="true">school</i><h2 class="heading-inline">Education</h2></div>
             <div class="collapsible-body dark-purple">
                 {% for edu in education %}
                 <ul class="collection with-header">
-                    <li class="collection-header dark-purple white-text hot-pink-border"><h4>{{edu.degree}}</h4><p style="font-size:large">{{edu.school}}</p><span class="grey-purple-text">{{edu.graduationDate}}</span></li>
+                    <li class="collection-header dark-purple white-text hot-pink-border"><h3 class="heading-entry">{{edu.degree}}</h3><p style="font-size:large">{{edu.school}}</p><span class="grey-purple-text">{{edu.graduationDate}}</span></li>
                     <li class="collection-item dark-purple white-text hot-pink-border">Overall GPA: {{edu.GPA}}/4.000<br/>{{edu.additionalInfo}}</li>
                 </ul>
                 {% endfor %}
             </div>
         </li>
         <li>
-            <div class="collapsible-header dark-purple white-text"><i class="material-icons">star</i>Skills</div>
+            <div class="collapsible-header dark-purple white-text"><i class="material-icons" aria-hidden="true">star</i><h2 class="heading-inline">Skills</h2></div>
             <div class="collapsible-body dark-purple">
                 <table class="dark-purple white-text fixed-table centered">
+                    <caption class="sr-only">Technical skills</caption>
                     {% for skill in skills %}
                     {% if forloop.counter0|divisibleby:"2" %}
                     <tr class="hot-pink-border">
@@ -69,6 +72,10 @@
         </li>
     </ul>
 </div>
+</div>
+{% endblock %}
+
+{% block extra_body %}
 <script>
     $(document).ready(function() {
         var carouselSlider = document.querySelectorAll('.carousel');

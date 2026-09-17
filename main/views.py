@@ -1,5 +1,5 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.http import Http404, HttpResponse
 from .forms import ContactMeForm
 from django.core.mail import EmailMessage
 from django.conf import settings
@@ -21,7 +21,9 @@ def index(request):
         context={
             "jobs": job_and_detail,
             "education": Education.objects.all(),
-            "skills": Skill.objects.all().order_by('skill')})
+            "skills": Skill.objects.all().order_by('skill'),
+            "page_title": "Jason Peck - Software Developer",
+            "page_description": "Jason Peck is a software developer working in JavaScript, TypeScript and Python. Read about his professional experience, education and technical skills."})
 
 def portfolio(request):
     main_images = {}
@@ -69,7 +71,9 @@ def portfolio(request):
             'defaultImage': r"main/img/placeholder.png",
             "language_choices": language_choices,
             'data_filter_personal_status': personal_choices,
-            'filterList': json.dumps(filter_list_context)
+            'filterList': json.dumps(filter_list_context),
+            'page_title': "Portfolio - Jason Peck",
+            'page_description': "A selection of professional and personal software projects by Jason Peck, in Python, JavaScript, SQL, PowerShell and more."
         })
 
 def build_portfolio_context(language_choices, personal_choices):
@@ -79,24 +83,31 @@ def build_portfolio_context(language_choices, personal_choices):
     }
 
 
-def project(request):
-    request_id = request.GET.get('id')
-    project = Project.objects.get(title=request_id)
+def project(request, slug):
+    project = get_object_or_404(Project, slug=slug)
 
-    if project.html_project:
-        return render(
-                    request,
-                    'main/project_html.html',
-                    context={
-                        "project": project,
-                        "images": [img for img in ProjectImage.objects.all().filter(linkedProject=project)]})
+    template = 'main/project_html.html' if project.html_project else 'main/project_general.html'
 
     return render(
         request,
-        'main/project_general.html',
+        template,
         context={
             "project": project,
-            "images": [img for img in ProjectImage.objects.all().filter(linkedProject=project)]})
+            "images": [img for img in ProjectImage.objects.all().filter(linkedProject=project)],
+            "page_title": f"{project.title} - Jason Peck",
+            "page_description": project.briefDescription})
+
+def legacy_project_redirect(request):
+    """Permanently redirects the old /project/?id=<title> URLs to their slug URL."""
+    title = request.GET.get('id')
+
+    # Titles are not unique, so match the first rather than risk MultipleObjectsReturned.
+    project = Project.objects.filter(title=title).first() if title else None
+
+    if project is None:
+        raise Http404("No project matches the requested title.")
+
+    return redirect(project, permanent=True)
 
 def contact(request):
     if request.method == 'POST':
@@ -110,7 +121,9 @@ def contact(request):
         'main/contact.html',
         context={
             'form': form,
-            "google_recaptcha_site_key": settings.GOOGLE_RECAPTCHA_SITE_KEY})
+            "google_recaptcha_site_key": settings.GOOGLE_RECAPTCHA_SITE_KEY,
+            "page_title": "Contact - Jason Peck",
+            "page_description": "Get in touch with Jason Peck about a project, a role or a question."})
 
 def _get_contact_post_form(request):
     form = ContactMeForm(request.POST)
