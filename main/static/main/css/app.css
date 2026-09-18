@@ -1,0 +1,1055 @@
+/* ==========================================================================
+   jasonpeck — design system
+   Replaces Materialize 1.0.0. No framework, no jQuery.
+
+   Contrast: every text/background pair below was measured. Pairs that failed
+   WCAG AA under the old palette were adjusted rather than inherited:
+     - white on #D83F87 was 4.22:1 (fail). Filled surfaces carrying white text
+       now use --accent-deep #C9306F (5.08:1).
+     - #D83F87 as link text on dark was 3.77:1 (fail). Links use
+       --accent-text #E86AA5 (5.32:1).
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Tokens
+   -------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: light dark;
+
+  /* Brand */
+  --purple-deep: #2A1B3D;
+  --purple-mid: #44318D;
+  --accent: #D83F87;        /* decorative surfaces, borders, swatches */
+  --accent-deep: #C9306F;   /* surfaces that carry white text */
+  --accent-text: #E86AA5;   /* accent used as text on dark backgrounds */
+
+  /* Page */
+  --bg: linear-gradient(120deg, #b9a7d0 0%, #c3bcd2 45%, #a8b6bd 100%);
+  --bg-solid: #b9a7d0;
+
+  /* Surfaces */
+  --surface: #2A1B3D;
+  --surface-raised: #35244d;
+  --surface-sunken: #1c1129;
+  --surface-plain: #ffffff;
+  --surface-plain-text: #241833;
+
+  /* Text */
+  --text-on-surface: #F7F5FA;
+  --text-muted: #B4C1C4;
+  --text-on-page: #241833;
+  --field-border: rgba(42, 27, 61, 0.35);
+  --danger-text: #8c0019;
+
+  /* Lines and shadows */
+  --border: rgba(255, 255, 255, 0.14);
+  --border-strong: var(--accent);
+  --ring: var(--accent-text);
+  --shadow-1: 0 1px 2px rgba(20, 14, 31, 0.18), 0 2px 8px rgba(20, 14, 31, 0.12);
+  --shadow-2: 0 4px 10px rgba(20, 14, 31, 0.22), 0 12px 28px rgba(20, 14, 31, 0.18);
+
+  /* Type scale (1.25 minor third, 16px base) */
+  --text-xs: 0.8rem;
+  --text-sm: 0.9rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.563rem;
+  --text-2xl: 1.953rem;
+  --text-3xl: 2.441rem;
+  --text-4xl: 3.052rem;
+
+  /* Spacing (4px rhythm) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  --radius: 6px;
+  --radius-lg: 12px;
+  --nav-height: 60px;
+  --measure: 68ch;
+}
+
+/* Dark palette. Applied in two situations, so it appears in two rules that must
+   be kept identical:
+
+     1. the OS asks for dark and the visitor has not explicitly chosen light
+     2. the visitor explicitly chose dark
+
+   `data-theme` is written to <html> by the toggle (and re-applied by a small
+   inline script in <head> before first paint). With no stored choice the
+   attribute is absent, so rule 1 governs and the site follows the OS. */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --bg: linear-gradient(120deg, #17101f 0%, #1b1526 45%, #141a1d 100%);
+    --bg-solid: #17101f;
+
+    --surface: #241833;
+    --surface-raised: #2f2042;
+    --surface-sunken: #150e1e;
+    --surface-plain: #241833;
+    --surface-plain-text: #F7F5FA;
+
+    --text-on-page: #EDE9F2;
+    --field-border: rgba(255, 255, 255, 0.22);
+    --danger-text: #ff9aa8;
+    --border: rgba(255, 255, 255, 0.1);
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
+    --shadow-2: 0 4px 10px rgba(0, 0, 0, 0.55), 0 12px 28px rgba(0, 0, 0, 0.4);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: linear-gradient(120deg, #17101f 0%, #1b1526 45%, #141a1d 100%);
+  --bg-solid: #17101f;
+
+  --surface: #241833;
+  --surface-raised: #2f2042;
+  --surface-sunken: #150e1e;
+  --surface-plain: #241833;
+  --surface-plain-text: #F7F5FA;
+
+  --text-on-page: #EDE9F2;
+  --field-border: rgba(255, 255, 255, 0.22);
+  --danger-text: #ff9aa8;
+  --border: rgba(255, 255, 255, 0.1);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 4px 10px rgba(0, 0, 0, 0.55), 0 12px 28px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme="light"] { color-scheme: light; }
+
+/* --------------------------------------------------------------------------
+   2. Reset and base
+   -------------------------------------------------------------------------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg) fixed;
+  background-color: var(--bg-solid);
+  color: var(--text-on-page);
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  font-size: var(--text-base);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+img, picture, video, svg { display: block; max-width: 100%; }
+img, video { height: auto; }
+
+/* Author rules beat the user-agent sheet regardless of specificity, so the
+   display rule above would otherwise un-hide [hidden] elements — including the
+   icon sprite, which then occupies layout space. */
+[hidden] { display: none !important; }
+
+a { color: inherit; }
+
+button { font: inherit; color: inherit; }
+
+h1, h2, h3, h4 {
+  margin: 0 0 var(--space-3);
+  line-height: 1.2;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+h1 { font-size: var(--text-3xl); }
+h2 { font-size: var(--text-2xl); }
+h3 { font-size: var(--text-xl); }
+h4 { font-size: var(--text-lg); }
+
+p { margin: 0 0 var(--space-4); }
+p:last-child { margin-bottom: 0; }
+
+ul, ol { margin: 0; padding: 0; }
+
+/* One visible focus treatment everywhere, keyboard only. */
+:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. Layout
+   -------------------------------------------------------------------------- */
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+}
+
+@media (min-width: 40rem) {
+  .container { padding-inline: var(--space-5); }
+}
+
+.section { padding-block: var(--space-6); }
+.stack > * + * { margin-top: var(--space-5); }
+
+/* A reading-width column centred in the container. Without the auto margin a
+   max-width block sits against the left edge of a much wider container, which
+   reads as the whole page being off-centre. */
+.column {
+  width: 100%;
+  max-width: 48rem;
+  margin-inline: auto;
+}
+
+/* Flex rather than grid so a short final row centres under the rows above it;
+   a grid leaves the empty tracks in place and the last row hangs left. */
+.card-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-5);
+}
+
+.card-grid > * {
+  flex: 1 1 17rem;
+  max-width: 22rem;
+}
+
+/* Project screenshots are the point of the detail page, so they get more room
+   than a project card does. */
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-5);
+}
+
+.gallery > * {
+  flex: 1 1 22rem;
+  max-width: 36rem;
+  margin: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-3);
+  top: calc(var(--space-3) * -10);
+  z-index: 100;
+  padding: var(--space-3) var(--space-4);
+  background: var(--accent-deep);
+  color: #fff;
+  border-radius: var(--radius);
+  text-decoration: none;
+  transition: top 120ms ease;
+}
+
+.skip-link:focus { top: var(--space-3); }
+
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --------------------------------------------------------------------------
+   4. Icons
+   -------------------------------------------------------------------------- */
+
+.icon {
+  width: 1.25em;
+  height: 1.25em;
+  flex: none;
+  fill: currentColor;
+}
+
+/* --------------------------------------------------------------------------
+   5. Site header
+   -------------------------------------------------------------------------- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--purple-mid);
+  box-shadow: var(--shadow-1);
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: var(--nav-height);
+}
+
+.site-header a { text-decoration: none; }
+
+.brand {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+
+.nav {
+  display: none;
+  align-items: center;
+  gap: var(--space-2);
+  list-style: none;
+}
+
+.nav a {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  color: #D9E1E3;
+  font-weight: 500;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.nav a:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+
+.nav a[aria-current="page"] {
+  color: #fff;
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.nav-toggle,
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px; height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  color: #fff;
+  cursor: pointer;
+}
+
+.nav-toggle:hover,
+.theme-toggle:hover { background: rgba(255, 255, 255, 0.12); }
+
+/* The theme control stays visible at every width, unlike the nav links. */
+.site-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+@media (min-width: 48rem) {
+  .nav { display: flex; }
+  .nav-toggle { display: none; }
+}
+
+/* Mobile drawer, built on <dialog> so Escape and focus trapping come free. */
+.drawer {
+  margin: 0 0 0 auto;
+  width: min(20rem, 85vw);
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  padding: var(--space-5);
+  border: 0;
+  background: var(--purple-mid);
+  color: #fff;
+  box-shadow: var(--shadow-2);
+}
+
+.drawer::backdrop { background: rgba(20, 14, 31, 0.6); }
+
+.drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+
+.drawer__list { list-style: none; display: grid; gap: var(--space-2); }
+
+.drawer__list a {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  color: #D9E1E3;
+  text-decoration: none;
+  font-size: var(--text-lg);
+}
+
+.drawer__list a:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.drawer__list a[aria-current="page"] { color: #fff; background: rgba(255, 255, 255, 0.16); }
+
+/* --------------------------------------------------------------------------
+   6. Hero banner
+   -------------------------------------------------------------------------- */
+
+.hero {
+  position: relative;
+  aspect-ratio: 2000 / 215;
+  overflow: hidden;
+  background: var(--surface-sunken);
+}
+
+.hero img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Two frames crossfade with no JavaScript and no layout cost. */
+.hero__frame--b { opacity: 0; animation: hero-fade 12s infinite; }
+.hero__frame--a { animation: hero-fade 12s infinite reverse; }
+
+@keyframes hero-fade {
+  0%, 42% { opacity: 0; }
+  50%, 92% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__frame--b { display: none; }
+  .hero__frame--a { opacity: 1; animation: none; }
+}
+
+/* --------------------------------------------------------------------------
+   7. Cards
+   -------------------------------------------------------------------------- */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--text-on-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+
+.card__body { padding: var(--space-5); }
+.card__body > * + * { margin-top: var(--space-3); }
+
+.card__title { margin: 0; font-size: var(--text-lg); }
+
+.card__meta {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.card__text { margin: 0; color: var(--text-on-surface); }
+
+/* :not(.btn) — a button inside a card keeps its own colour, or an accent
+   button ends up with accent-coloured text on an accent background. */
+.card a:not(.btn) { color: var(--accent-text); }
+
+/* Profile card: photo beside the text on wide screens, stacked on narrow. */
+.profile-card {
+  display: grid;
+  gap: 0;
+  grid-template-columns: 1fr;
+  /* 52rem left the body column 455px against the 464px the three CTAs need, so
+     Download CV dropped to its own row. 56rem gives the row ~55px of headroom
+     while keeping the text under the 68ch measure. */
+  max-width: 56rem;
+  margin-inline: auto;   /* otherwise it sits against the container's left edge */
+}
+
+.profile-card__photo {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-5) var(--space-5) 0;
+}
+
+.profile-card__photo img {
+  max-height: 20rem;
+  width: auto;
+  border-radius: var(--radius);
+}
+
+.profile-card__body { padding: var(--space-5); }
+.profile-card__body p { margin: 0; }
+
+/* The `margin: 0` above is (0,1,1); a universal child selector is only (0,1,0),
+   so the paragraphs were losing the gap entirely and running together. The
+   `p + p` branch matches that specificity and sits later, so it wins the tie. */
+.profile-card__body > * + *,
+.profile-card__body > p + p { margin-top: var(--space-5); }
+
+/* The opening sentence leads; the supporting line sits a step quieter. */
+.profile-card__tagline {
+  font-size: var(--text-lg);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.profile-card__body p:not(.profile-card__tagline) {
+  color: var(--text-muted);
+}
+
+/* Availability notice. Pulled back out of the muted colour above because it is
+   the line a recruiter is looking for. */
+.profile-card__body p.availability {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--text-on-surface);
+  font-weight: 600;
+}
+
+.availability__dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.22);
+  translate: 0 -1px;
+}
+
+@media (min-width: 40rem) {
+  .profile-card { grid-template-columns: auto 1fr; align-items: center; }
+  .profile-card__photo { padding: var(--space-5); }
+  .profile-card__photo img { max-height: 24rem; }
+  .profile-card__body { padding: var(--space-6) var(--space-6) var(--space-6) 0; }
+}
+
+/* Project cards: equal heights, image cropped rather than letterboxed.
+
+   Two colours per kind, because one cannot do both jobs. --kind is bright so
+   the band and border stay visible against the dark card (the old #44318D
+   measured 1.56:1 against it — effectively invisible). --kind-fill is deeper
+   so white tag text clears 4.5:1 on it. */
+.project-card {
+  --kind: #E84E96;        /* 4.51:1 on the card surface */
+  --kind-fill: #C9306F;   /* 5.08:1 against white text */
+
+  height: 100%;
+  border: 2px solid var(--kind);
+  border-top-width: 8px;
+  background: var(--surface);
+  background: color-mix(in srgb, var(--kind) 12%, var(--surface));
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.project-card--professional {
+  --kind: #7C6BE0;        /* 3.81:1 on the card surface */
+  --kind-fill: #44318D;   /* 10.15:1 against white text */
+}
+
+.project-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); }
+
+.project-card__media {
+  aspect-ratio: 16 / 10;
+  background: var(--surface-sunken);
+}
+
+.project-card__media img { width: 100%; height: 100%; object-fit: cover; }
+
+.project-card__body { display: flex; flex-direction: column; flex: 1; }
+
+.project-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+}
+
+.tag {
+  padding: 2px var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* The kind tag is filled, not outlined, so the category reads at a glance and
+   is not carried by colour alone. */
+.tag--kind {
+  background: var(--kind-fill);
+  border-color: transparent;
+  color: #fff;
+  font-weight: 600;
+}
+
+.project-card__link {
+  margin-top: auto;
+  padding-top: var(--space-4);
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   8. Accordion — native <details>, so it works before and without JS
+   -------------------------------------------------------------------------- */
+
+.accordion { display: grid; gap: var(--space-3); }
+
+.accordion__item {
+  background: var(--surface);
+  color: var(--text-on-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+
+.accordion__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.accordion__summary::-webkit-details-marker { display: none; }
+.accordion__summary:hover { background: var(--surface-raised); }
+
+/* A real heading inside the summary, carrying the summary's own type. */
+.heading-in-summary {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.accordion__chevron {
+  margin-left: auto;
+  transition: transform 160ms ease;
+}
+
+.accordion__item[open] .accordion__chevron { transform: rotate(180deg); }
+
+.accordion__panel { padding: 0 var(--space-5) var(--space-5); }
+
+/* --------------------------------------------------------------------------
+   9. Entry list (jobs, education)
+   -------------------------------------------------------------------------- */
+
+.entries { display: grid; gap: var(--space-5); list-style: none; }
+
+.entry {
+  padding-left: var(--space-4);
+  border-left: 3px solid var(--accent);
+}
+
+.entry__title { margin: 0; font-size: var(--text-lg); }
+
+.entry__org { margin: 0; font-weight: 500; }
+
+.entry__dates {
+  margin: 0 0 var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.entry__points { display: grid; gap: var(--space-2); list-style: none; }
+
+.entry__points li {
+  position: relative;
+  padding-left: var(--space-4);
+}
+
+.entry__points li::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0.65em;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+}
+
+.skills li {
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-raised);
+  border-radius: 999px;
+  font-size: var(--text-sm);
+}
+
+/* --------------------------------------------------------------------------
+   10. Buttons
+   -------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: var(--purple-mid);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 120ms ease, transform 80ms ease;
+}
+
+.btn:hover { background: #4e39a3; }
+.btn:active { transform: translateY(1px); }
+
+.btn--accent { background: var(--accent-deep); }
+.btn--accent:hover { background: #b32a62; }
+
+/* Ghost buttons sit on panels of varying lightness (white filter bar, dark
+   card, page background), so they take their colour from context rather than
+   pinning a value that only reads on one of them. */
+.btn--ghost {
+  background: transparent;
+  border-color: rgba(128, 128, 128, 0.45);
+  border-color: color-mix(in srgb, currentColor 40%, transparent);
+  color: inherit;
+}
+
+.btn--ghost:hover {
+  background: rgba(128, 128, 128, 0.14);
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+/* --------------------------------------------------------------------------
+   11. Filters
+   -------------------------------------------------------------------------- */
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-plain);
+  color: var(--surface-plain-text);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+}
+
+.filters__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.filters__label { font-weight: 600; margin-right: var(--space-2); }
+
+.filters__count { margin: 0 0 0 auto; }
+
+/* Active filters, each removable on its own. The menu buttons already show a
+   pressed state, but only while the menu is open — the chips are the only
+   always-visible account of what is being filtered. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.chips__label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  margin-right: var(--space-1);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent-deep);
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.chip:hover { background: #b32a62; }
+
+.chip .icon {
+  width: 1em;
+  height: 1em;
+  opacity: 0.9;
+}
+
+/* 32px clears the WCAG minimum, but a dismiss target that small is fiddly with
+   a finger, so touch pointers get a full-size one. */
+@media (pointer: coarse) {
+  .chip {
+    min-height: 44px;
+    padding-inline: var(--space-4) var(--space-3);
+  }
+}
+
+.menu { position: relative; }
+
+.menu__panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  z-index: 40;
+  min-width: 12rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: var(--space-2);
+  margin: 0;
+  list-style: none;
+  background: var(--surface-plain);
+  color: var(--surface-plain-text);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-2);
+}
+
+.menu__panel[hidden] { display: none; }
+
+.menu__panel button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu__panel button:hover { background: rgba(42, 27, 61, 0.08); }
+
+.menu__panel button[aria-pressed="true"] {
+  background: var(--accent-deep);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Sized to its contents and centred. Stretched to the full container it held
+   174px of content in a 1152px bar, which read as a layout mistake. */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2) var(--space-4);
+  width: fit-content;
+  margin-inline: auto;
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface-plain);
+  color: var(--surface-plain-text);
+  border-radius: 999px;
+  box-shadow: var(--shadow-1);
+  font-size: var(--text-sm);
+}
+
+.legend__label {
+  font-weight: 600;
+  margin-right: var(--space-1);
+}
+
+.legend__item { display: flex; align-items: center; gap: var(--space-2); }
+
+.legend__swatch {
+  width: 14px; height: 14px;
+  border-radius: 3px;
+  background: #E84E96;    /* matches .project-card --kind */
+}
+
+.legend__swatch--professional { background: #7C6BE0; }
+
+/* --------------------------------------------------------------------------
+   12. Forms
+   -------------------------------------------------------------------------- */
+
+.field { display: grid; gap: var(--space-2); margin-bottom: var(--space-5); }
+
+.field label { font-weight: 600; }
+
+.field input,
+.field textarea {
+  width: 100%;
+  padding: var(--space-3);
+  font: inherit;
+  color: var(--text-on-page);
+  background: var(--surface-plain);
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius);
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible { border-color: var(--accent-deep); }
+
+.field textarea { min-height: 10rem; resize: vertical; }
+
+.form-errors {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--danger-text);
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   13. Toast
+   -------------------------------------------------------------------------- */
+
+.toasts {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-5);
+  translate: -50% 0;
+  z-index: 80;
+  display: grid;
+  gap: var(--space-2);
+  width: min(28rem, calc(100vw - 2 * var(--space-4)));
+}
+
+.toast {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-on-surface);
+  box-shadow: var(--shadow-2);
+  animation: toast-in 180ms ease;
+}
+
+.toast--success { background: var(--accent-deep); color: #fff; }
+.toast--error { background: #8c0019; color: #fff; }
+.toast--warning { background: #6b4a00; color: #fff; }
+
+@keyframes toast-in { from { opacity: 0; translate: 0 8px; } }
+
+/* --------------------------------------------------------------------------
+   14. Lightbox
+   -------------------------------------------------------------------------- */
+
+.lightbox {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  max-width: 96vw;
+  max-height: 96dvh;
+}
+
+.lightbox::backdrop { background: rgba(20, 14, 31, 0.86); }
+.lightbox img { max-width: 96vw; max-height: 96dvh; width: auto; border-radius: var(--radius); }
+
+.zoomable { cursor: zoom-in; }
+
+/* --------------------------------------------------------------------------
+   15. Page furniture
+   -------------------------------------------------------------------------- */
+
+.page-title { margin-bottom: var(--space-2); }
+
+/* A row of calls to action. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.lede {
+  max-width: var(--measure);
+  font-size: var(--text-lg);
+  color: var(--text-on-page);
+}
+
+/* Inside a centred column the lede should fill it, not re-constrain itself. */
+.column .lede,
+.column .prose { max-width: none; }
+
+.prose { max-width: var(--measure); }
+
+.panel {
+  padding: var(--space-5);
+  background: var(--surface);
+  color: var(--text-on-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+}
+
+.panel a:not(.btn) { color: var(--accent-text); }
+
+.meta-list {
+  display: grid;
+  gap: var(--space-1) var(--space-4);
+  margin: 0 0 var(--space-5);
+}
+
+.meta-list dt { font-weight: 600; }
+.meta-list dd { margin: 0; }      /* browsers indent dd by 40px otherwise */
+
+@media (min-width: 40rem) {
+  .meta-list { grid-template-columns: auto 1fr; align-items: baseline; }
+}
+
+.empty-state {
+  padding: var(--space-7) var(--space-4);
+  text-align: center;
+  color: var(--text-on-page);
+}
+
+.site-footer {
+  margin-top: var(--space-8);
+  padding-block: var(--space-6);
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+}
+
+.site-footer a { color: var(--accent-text); }
+
+.site-footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.site-footer__links { display: flex; flex-wrap: wrap; gap: var(--space-4); list-style: none; }
+
+.site-footer__links a { display: flex; align-items: center; gap: var(--space-2); text-decoration: none; }
+.site-footer__links a:hover { text-decoration: underline; }

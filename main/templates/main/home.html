@@ -1,92 +1,131 @@
 {% extends "main/header.html" %}
-{% load static %}
+{% load static versioned_static %}
 
 {% block content %}
+{% comment %}The h1 stays visually hidden because the banner below already
+renders the name. Repeating it as visible text read as a duplicate title.
+{% endcomment %}
+<h1 class="sr-only">Jason Peck - Solution Architect</h1>
+
+{% comment %}Decorative name banner. The two frames crossfade in CSS; the
+text they render is already in the h1 above, so both are aria-hidden.{% endcomment %}
+<div class="hero" aria-hidden="true">
+    <picture class="hero__frame hero__frame--a">
+        <source type="image/webp" sizes="100vw"
+                srcset="{% static 'main/img/banner-name-800w.webp' %} 800w,
+                        {% static 'main/img/banner-name-1200w.webp' %} 1200w,
+                        {% static 'main/img/banner-name.webp' %} 2000w">
+        <img src="{% static 'main/img/banner-name.png' %}" alt="" width="2000" height="215" fetchpriority="high">
+    </picture>
+    <picture class="hero__frame hero__frame--b">
+        <source type="image/webp" sizes="100vw"
+                srcset="{% static 'main/img/banner-role-800w.webp' %} 800w,
+                        {% static 'main/img/banner-role-1200w.webp' %} 1200w,
+                        {% static 'main/img/banner-role.webp' %} 2000w">
+        <img src="{% static 'main/img/banner-role.png' %}" alt="" width="2000" height="215">
+    </picture>
 </div>
-<div class="carousel carousel-slider no-autoinit">
-        <a class="carousel-item"><img src="{% static 'main/img/Jason.png' %}"></a>
-        <a class="carousel-item"><img src="{% static 'main/img/Developer.png' %}"></a>
-</div>
-<div class="container">
-    <br>
-</div>
-<div class="container">
-<div class="col s12 m7">
-    <div class="card horizontal dark-purple white-text">
-        <div class="card-image">
-        <img src="{% static 'main/img/jasonpeck.png' %}">
+
+<div class="container section stack">
+    {% comment %}Positioning statement aimed at prospective employers, so it
+    leads with the role and the domains rather than an employer name. Shape:
+    what he is and where he has done it, then how he works and with what, then
+    the two things a visitor most likely came to do.{% endcomment %}
+    <article class="card profile-card">
+        <div class="profile-card__photo">
+            <picture>
+                {% comment %}Painted at 247px wide on mobile and 297px on desktop, so
+                the sizes hint keeps a 1x phone on the 300w file.{% endcomment %}
+                <source type="image/webp" sizes="(min-width: 40rem) 297px, 247px"
+                        srcset="{% static 'main/img/jasonpeck-300w.webp' %} 300w,
+                                {% static 'main/img/jasonpeck-600w.webp' %} 600w,
+                                {% static 'main/img/jasonpeck.webp' %} 900w">
+                {% comment %}Declared at the 300px scale, not the file's 600px. The photo sits
+                in an `auto` grid column, so its intrinsic width is a layout input —
+                declaring 600 let the column claim more and then get squeezed.{% endcomment %}
+                <img src="{% static 'main/img/jasonpeck.jpg' %}" alt="Portrait of Jason Peck" width="300" height="388">
+            </picture>
         </div>
-        <div class="card-stacked">
-        <div class="card-content valign-wrapper">
-            <p class="flow-text">
-                I have been writing and reviewing code professionally in the electronic medical record industry since June 2017. Programming is also
-                a personal hobby of mine, leading me to experimented with a number of programming languages and projects. To see examples of my work, visit the
-                <a class="hot-pink-text" href="/portfolio">portfolio page</a>.
-            </p>
+        <div class="profile-card__body">
+            <p class="profile-card__tagline">Solution Architect leading a team to design and deliver system integrations, with a strong background in B2B, ERP, and healthcare integration.</p>
+
+            <p>I work with customers from scoping through deployment, and stay hands-on in multiple languages and tools including AI, Claude Code, Microsoft Copilot, JavaScript, TypeScript, and Python. Designing and building software professionally since 2017.</p>
+
+            <p class="availability"><span class="availability__dot" aria-hidden="true"></span>Open to Solution Architect, senior engineering and other technical leadership roles &mdash; remote or Madison-area.</p>
+
+            <div class="actions">
+                <a class="btn btn--accent" href="{% url 'main:portfolio' %}">View my work</a>
+                <a class="btn" href="{% url 'main:contact' %}">Get in touch</a>
+                {% static_if_exists 'main/files/jason-peck-resume.pdf' as resume_url %}
+                {% if resume_url %}
+                <a class="btn btn--ghost" href="{{ resume_url }}" download>Download CV</a>
+                {% endif %}
+            </div>
         </div>
-        </div>
+    </article>
+
+    <div class="accordion">
+        <details class="accordion__item" open>
+            <summary class="accordion__summary">
+                <svg class="icon" aria-hidden="true"><use href="#i-work"/></svg>
+                <h2 class="heading-in-summary">Experience</h2>
+                <svg class="icon accordion__chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </summary>
+            <div class="accordion__panel">
+                <ul class="entries">
+                    {% for job, detailList in jobs.items %}
+                    <li class="entry">
+                        <h3 class="entry__title">{{ job.title }}</h3>
+                        <p class="entry__org">{{ job.employer }}</p>
+                        <p class="entry__dates">{{ job.startDate }} &ndash; {% if job.endDate is none %}Present{% else %}{{ job.endDate }}{% endif %}</p>
+                        <ul class="entry__points">
+                            {% for detail in detailList %}
+                            <li>{{ detail.content }}</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </details>
+
+        <details class="accordion__item">
+            <summary class="accordion__summary">
+                <svg class="icon" aria-hidden="true"><use href="#i-school"/></svg>
+                <h2 class="heading-in-summary">Education</h2>
+                <svg class="icon accordion__chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </summary>
+            <div class="accordion__panel">
+                <ul class="entries">
+                    {% for edu in education %}
+                    <li class="entry">
+                        <h3 class="entry__title">{{ edu.degree }}</h3>
+                        <p class="entry__org">{{ edu.school }}</p>
+                        <p class="entry__dates">{{ edu.graduationDate }}</p>
+                        <ul class="entry__points">
+                            <li>Overall GPA: {{ edu.GPA }}/4.000</li>
+                            {% if edu.additionalInfo %}<li>{{ edu.additionalInfo }}</li>{% endif %}
+                        </ul>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </details>
+
+        <details class="accordion__item">
+            <summary class="accordion__summary">
+                <svg class="icon" aria-hidden="true"><use href="#i-star"/></svg>
+                <h2 class="heading-in-summary">Skills</h2>
+                <svg class="icon accordion__chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </summary>
+            <div class="accordion__panel">
+                <ul class="skills">
+                    {% for skill in skills %}
+                    <li>{{ skill }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </details>
     </div>
 </div>
-<div class="row">
-    <ul class="collapsible popout">
-        <li class="active">
-            <div class="collapsible-header dark-purple white-text"><i class="material-icons">work</i>Experience</div>
-                <div class="collapsible-body dark-purple">
-                    {% for job, detailList in jobs.items %}
-                    <ul class="collection with-header">
-                        <li class="collection-header dark-purple white-text hot-pink-border"><h4>{{job.title}}</h4><p style="font-size:large">{{job.employer}}</p><span class="grey-purple-text">{{job.startDate}} - {% if job.endDate is none%}Present{% else %}{{job.endDate}}{% endif %}</span></li>
-                        {% for detail in detailList %}
-                        <li class="collection-item dark-purple white-text hot-pink-border">{{detail.content}}</li>
-                        {% endfor %}
-                    </ul>
-                    {% endfor %}
-            </div>
-        </li>
-        <li>
-            <div class="collapsible-header dark-purple white-text"><i class="material-icons">school</i>Education</div>
-            <div class="collapsible-body dark-purple">
-                {% for edu in education %}
-                <ul class="collection with-header">
-                    <li class="collection-header dark-purple white-text hot-pink-border"><h4>{{edu.degree}}</h4><p style="font-size:large">{{edu.school}}</p><span class="grey-purple-text">{{edu.graduationDate}}</span></li>
-                    <li class="collection-item dark-purple white-text hot-pink-border">Overall GPA: {{edu.GPA}}/4.000<br/>{{edu.additionalInfo}}</li>
-                </ul>
-                {% endfor %}
-            </div>
-        </li>
-        <li>
-            <div class="collapsible-header dark-purple white-text"><i class="material-icons">star</i>Skills</div>
-            <div class="collapsible-body dark-purple">
-                <table class="dark-purple white-text fixed-table centered">
-                    {% for skill in skills %}
-                    {% if forloop.counter0|divisibleby:"2" %}
-                    <tr class="hot-pink-border">
-                    {% endif %}
-                        <td>{{skill}}
-                    {% endfor %}
-                    {% if not skills|length|divisibleby:"2" %}<td>{% endif %}
-                </table>
-            </div>
-        </li>
-    </ul>
-</div>
-<script>
-    $(document).ready(function() {
-        var carouselSlider = document.querySelectorAll('.carousel');
-        var options = {
-            fullWidth: true,
-            duration: 75,
-        }
-
-    var instances = M.Carousel.init(carouselSlider, options);
-
-    setInterval(nextCarouselItem, 3000);
-
-    function nextCarouselItem() {
-      var elem = document.querySelector('.carousel');
-      var el = M.Carousel.getInstance(elem);
-
-      el.next();
-  }
-  })
-</script>
 {% endblock %}

@@ -1,13 +1,9 @@
+{% comment %}Rendered as inert nodes; app.js promotes them into live toasts.
+Without JS the text is still present and announced.{% endcomment %}
 {% if messages %}
+<div class="sr-only" role="status" aria-live="polite">
     {% for message in messages %}
-        {% if message.tags == 'success'%}
-            <script>M.toast({html: "{{message}}", classes: 'hot-pink rounded', displayLength:2000});</script>
-        {% elif message.tags == 'info'%}
-            <script>M.toast({html: "{{message}}", classes: 'blue rounded', displayLength:2000});</script>
-        {% elif message.tags == 'warning'%}
-            <script>M.toast({html: "{{message}}", classes: 'orange rounded', displayLength:10000});</script>
-        {% elif message.tags == 'error'%}
-            <script>M.toast({html: "{{message}}", classes: 'red rounded', displayLength:10000});</script>
-        {% endif %}
+    <p data-toast="{{ message.tags|default:'info' }}" data-toast-life="{% if message.tags == 'error' or message.tags == 'warning' %}10000{% else %}5000{% endif %}">{{ message }}</p>
     {% endfor %}
+</div>
 {% endif %}
