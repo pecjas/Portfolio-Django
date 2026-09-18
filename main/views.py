@@ -50,7 +50,7 @@ def portfolio(request):
         }})
 
     language_choices = {}
-    for lang in dir(Project.ProgramLanguage):
+    for lang in Project.ProgramLanguage.__members__:
         if lang.startswith('_'):
             continue
 

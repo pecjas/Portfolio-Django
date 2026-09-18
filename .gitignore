@@ -7,3 +7,4 @@ env/
 /media/
 /main/migrations/
 /static/
+.venv/
