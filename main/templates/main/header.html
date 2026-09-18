@@ -18,11 +18,17 @@
     <meta property="og:title" content="{{ meta_title }}">
     <meta property="og:description" content="{{ meta_description }}">
     <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
-    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'main/img/jasonpeck.jpg' %}">
+    {% comment %}A dedicated 1200x630 card. The portrait is 3:4, which LinkedIn and
+    Slack letterbox down to a strip that loses the face entirely.{% endcomment %}
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'main/img/og-card.jpg' %}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Jason Peck, Solution Architect">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ meta_title }}">
     <meta name="twitter:description" content="{{ meta_description }}">
-    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'main/img/jasonpeck.jpg' %}">
+    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'main/img/og-card.jpg' %}">
+    <meta name="twitter:image:alt" content="Jason Peck, Solution Architect">
     {% endwith %}
 
     <link href="{% versioned_static 'main/css/app.css' %}" rel="stylesheet">

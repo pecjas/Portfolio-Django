@@ -176,11 +176,10 @@ pick up a newly created tag library, and templates using it raise `TemplateSynta
 
 Also outstanding from this phase:
 
-- [ ] Replace the Open Graph image. It currently points at `jasonpeck.png` (300x450 portrait);
-      `og:image` wants roughly 1200x630 for LinkedIn and Slack previews to render properly.
-- [ ] `manage.py check --deploy` reports pre-existing security warnings unrelated to this phase:
-      no `SECURE_HSTS_SECONDS`, no `SECURE_SSL_REDIRECT`, a short `SECRET_KEY`, and neither
-      `SESSION_COOKIE_SECURE` nor `CSRF_COOKIE_SECURE` set. Worth folding into Phase 2.
+- [x] Replace the Open Graph image — now a dedicated 1200x630 card, see *Share card* below.
+- [~] `manage.py check --deploy` reported no `SECURE_HSTS_SECONDS`, no `SECURE_SSL_REDIRECT`,
+      a short `SECRET_KEY`, and neither `SESSION_COOKIE_SECURE` nor `CSRF_COOKIE_SECURE`.
+      All but the `SECRET_KEY` are fixed; that one needs a rotated value only Jason can set.
 - [x] The bio card on the home page kept its horizontal layout at 375px. Below 600px it now stacks:
       photo centred on top, text full width underneath.
 - [x] The portfolio filter buttons truncated at 375px. `.filter-container` now drops its `width: 50%`
@@ -583,3 +582,63 @@ No dead link in the meantime. `LINKEDIN_URL` in settings behaves the same way fo
 | CV download | drop the PDF at `main/static/main/files/jason-peck-resume.pdf` |
 | Dual "Present" | set Epic Systems' end date in the production admin |
 | Project copy | the Portfolio Website description still credits Materialize |
+
+All other rows in this table have since been filled: the tagline is Jason's own wording plus an
+availability line, `LINKEDIN_URL` is set, and the CV is in place.
+
+## Pre-deployment pass (2026-09-17)
+
+**Status: complete. 33 tests passing.**
+
+### Portrait
+
+A new `jasonpeck.jpg` arrived at 3094x4000 and 469 KB, for a slot that is painted 247px wide on
+phones and 297px on desktop. It now ships as a WebP ladder (300w / 600w / 900w) with a 600w JPEG
+fallback; desktop pulls 10.8 KB, down from 469 KB.
+
+Two things broke in passing and were fixed:
+
+- `jasonpeck.png` was still the `og:image` and the `<picture>` fallback, so both 404'd once the
+  PNG was replaced by a JPG.
+- Declaring the fallback's true `600x776` changed the layout. The photo sits in an `auto` grid
+  column, so its intrinsic width is a sizing input; the column claimed more, then got squeezed,
+  and the photo rendered 99px wide. Declared at `300x388` instead — the old scale, the new ratio.
+
+The full-resolution original is kept at `source-images/jasonpeck-original.jpg`, outside the static
+tree so it is neither served nor collected.
+
+### Share card
+
+`og:image` pointed at the 3:4 portrait, which LinkedIn and Slack letterbox into a strip that loses
+the face. Replaced with `og-card.jpg`, a 1200x630 card in the same space theme as the hero banners:
+the palette gradient and starfield on the left with the name and role, the portrait feathered in on
+the right. 75 KB. `og:image:width`/`height`/`alt` are declared so the preview reserves the right box.
+
+`SocialCardTests` now asserts that every share image resolves through the staticfiles finders and
+that the declared dimensions match the file and are landscape. Verified by mutation: pointing
+`og:image` at a missing file fails the suite.
+
+### Profile card
+
+- The three text segments had **no** gap. `.profile-card__body p { margin: 0 }` is (0,1,1) and the
+  spacing rule was a universal child selector at (0,1,0), so it lost outright. Fixed with a
+  `p + p` branch at matching specificity, set to `var(--space-5)`.
+- The three CTAs wrapped to two rows, short by 8.8px. The card's `max-width` went 52rem to 56rem,
+  which gives the button row ~55px of headroom and leaves the text at a 63-character measure.
+  Holds down to roughly 920px wide, below which the buttons wrap again.
+
+### Housekeeping
+
+- Deleted the superseded `Jason.*` and `Developer.*` banner files — 8 files, 1.05 MB, unreferenced
+  since the hero moved to `banner-name.*` / `banner-role.*`.
+- `makemigrations --check` is clean; no model changes are unmigrated.
+
+### Still outstanding at deploy time
+
+| Item | Needs | Blocking? |
+|---|---|---|
+| `SECRET_KEY` under 50 chars | a rotated value in `env.py`, both local and on PythonAnywhere | no, but do it |
+| Dual "Present" | Epic Systems' end date in the production admin | no |
+| Portfolio Website copy | drop the Materialize credit, add AI / Claude Code | no |
+| GA4 swap | a GA4 property, then an `env.py` edit | no, UA stopped collecting in 2023 |
+| `env.py` handling | deferred by Jason | no |

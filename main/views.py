@@ -105,6 +105,20 @@ def legacy_project_redirect(request):
 
     return redirect(project, permanent=True)
 
+def preview_error_page(request, code):
+    """Renders 404.html / 500.html at their real status, for development only.
+
+    Django swaps in its own debug 404 whenever DEBUG is True, so the styled
+    template is otherwise impossible to look at without turning DEBUG off --
+    which also stops runserver serving static files and switches on the HTTPS
+    redirect. This route sidesteps both.
+    """
+    if not settings.DEBUG:
+        raise Http404("Error page previews are a development-only route.")
+
+    return render(request, f"{code}.html", status=int(code))
+
+
 def contact(request):
     if request.method == 'POST':
         form = _get_contact_post_form(request)

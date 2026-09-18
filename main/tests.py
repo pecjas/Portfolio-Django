@@ -1,3 +1,4 @@
+import re
 from datetime import date
 
 from django.test import TestCase
@@ -331,6 +332,87 @@ class OptionalAssetTests(TestCase):
 
         self.assertEqual(static_if_exists("main/files/definitely-not-here.pdf"), "")
         self.assertNotEqual(static_if_exists("main/css/app.css"), "")
+
+
+class ErrorPageTests(TestCase):
+    """Django substitutes its own debug 404 while DEBUG is True, so the styled
+    template only ever renders in production. That makes it easy to break
+    without noticing."""
+
+    def test_404_uses_the_site_template(self):
+        with self.settings(DEBUG=False, ALLOWED_HOSTS=["testserver"]):
+            response = self.client.get("/no-such-page/")
+
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("404.html", [t.name for t in response.templates])
+        self.assertIn("main/header.html", [t.name for t in response.templates])
+
+    def test_preview_route_renders_the_error_templates(self):
+        for code in (404, 500):
+            with self.subTest(code=code):
+                with self.settings(DEBUG=True):
+                    response = self.client.get(
+                        reverse("main:preview_error_page", args=[code]))
+
+                self.assertEqual(response.status_code, code)
+                self.assertIn(f"{code}.html", [t.name for t in response.templates])
+
+    def test_preview_route_is_dead_in_production(self):
+        """The pattern is always registered, so the view itself has to refuse."""
+        with self.settings(DEBUG=False, ALLOWED_HOSTS=["testserver"]):
+            response = self.client.get(
+                reverse("main:preview_error_page", args=[404]))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertNotIn("500.html", [t.name for t in response.templates])
+
+
+class SocialCardTests(TestCase):
+    """Every referenced image must actually resolve.
+
+    og:image pointed at jasonpeck.png for a while after that file was replaced
+    by a .jpg, so link previews were fetching a 404 and nobody noticed — the
+    tag is invisible on the page itself.
+    """
+
+    def _meta(self, html, attr, value):
+        match = re.search(
+            r'<meta [^>]*%s="%s"[^>]*content="([^"]*)"' % (attr, re.escape(value)),
+            html)
+        self.assertIsNotNone(match, f"no meta {attr}={value}")
+        return match.group(1)
+
+    def test_share_images_resolve_to_a_real_file(self):
+        from django.contrib.staticfiles import finders
+
+        html = self.client.get(reverse("main:index")).content.decode()
+
+        for attr, value in [("property", "og:image"), ("name", "twitter:image")]:
+            with self.subTest(tag=value):
+                url = self._meta(html, attr, value)
+                path = url.split("/static/", 1)[1].split("?")[0]
+                self.assertIsNotNone(
+                    finders.find(path), f"{value} points at missing {path}")
+
+    def test_share_image_is_landscape_for_link_previews(self):
+        """A portrait crop gets letterboxed by LinkedIn and Slack. The declared
+        dimensions must match the file, or the preview reserves the wrong box."""
+        from django.contrib.staticfiles import finders
+        from PIL import Image
+
+        html = self.client.get(reverse("main:index")).content.decode()
+
+        declared = (int(self._meta(html, "property", "og:image:width")),
+                    int(self._meta(html, "property", "og:image:height")))
+
+        url = self._meta(html, "property", "og:image")
+        path = url.split("/static/", 1)[1].split("?")[0]
+
+        with Image.open(finders.find(path)) as img:
+            self.assertEqual(img.size, declared)
+
+        ratio = declared[0] / declared[1]
+        self.assertGreater(ratio, 1.5, "share image should be landscape")
 
 
 class LegacyProjectUrlTests(TestCase):
