@@ -1,0 +1,19 @@
+{% load versioned_static %}
+<footer class="site-footer">
+    <div class="container site-footer__inner">
+        <p>&copy; {% now "Y" %} Jason Peck</p>
+        <ul class="site-footer__links">
+            {% comment %}Rendered only when LINKEDIN_URL is set in settings.{% endcomment %}
+            {% if linkedin_url %}
+            <li><a href="{{ linkedin_url }}" target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#i-linkedin"/></svg>LinkedIn<span class="sr-only"> (opens in a new tab)</span></a></li>
+            {% endif %}
+            <li><a href="https://github.com/pecjas" target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg>GitHub<span class="sr-only"> (opens in a new tab)</span></a></li>
+            <li><a href="{% url 'main:contact' %}"><svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg>Contact</a></li>
+            <li><a href="mailto:pecjas@gmail.com"><svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg>pecjas@gmail.com</a></li>
+            {% static_if_exists 'main/files/jason-peck-resume.pdf' as resume_url %}
+            {% if resume_url %}
+            <li><a href="{{ resume_url }}" download><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg>CV</a></li>
+            {% endif %}
+        </ul>
+    </div>
+</footer>

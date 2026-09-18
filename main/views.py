@@ -1,5 +1,5 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.http import Http404, HttpResponse
 from .forms import ContactMeForm
 from django.core.mail import EmailMessage
 from django.conf import settings
@@ -9,11 +9,11 @@ import requests
 import json
 
 def index(request):
-    job_and_detail = {}
+    # prefetch_related pulls every job's details in one extra query rather than
+    # one query per job.
+    jobs = Job.objects.order_by('-startDate').prefetch_related('jobdetail_set')
 
-    for job in Job.objects.all().order_by('-startDate'):
-        job_and_detail.update(
-            {job: [detail for detail in JobDetail.objects.all().filter(relatedJob=job)]})
+    job_and_detail = {job: list(job.jobdetail_set.all()) for job in jobs}
 
     return render(
         request,
@@ -21,12 +21,15 @@ def index(request):
         context={
             "jobs": job_and_detail,
             "education": Education.objects.all(),
-            "skills": Skill.objects.all().order_by('skill')})
+            "skills": Skill.objects.all().order_by('skill'),
+            "page_title": "Jason Peck - Solution Architect",
+            "page_description": "Jason Peck is a Solution Architect working on system integrations, from healthcare interoperability to enterprise process automation, in TypeScript, JavaScript and Python."})
 
 def portfolio(request):
     main_images = {}
 
-    for image in ProjectImage.objects.all().filter(mainImage=True):
+    # select_related avoids a query per image when reading image.linkedProject.
+    for image in ProjectImage.objects.filter(mainImage=True).select_related('linkedProject'):
         main_images.update({image.linkedProject: image.image.url})
 
     allProjects = {}
@@ -38,19 +41,16 @@ def portfolio(request):
         filter_lang = filter_lang.split(', ')
         filter_lang = ' '.join([Project.ProgramLanguage(lang).name for lang in filter_lang])
 
-        if project.githubLink != None:
-            filter_personal_status = 'Personal'
-        else:
-            filter_personal_status = 'Professional'
-
         allProjects.update({project: {
             'image': image,
             'filterLang': filter_lang,
-            'filterPersonalStatus': filter_personal_status
+            'filterPersonalStatus': project.kind,
+            # Display names, as opposed to filterLang's underscored filter keys.
+            'languageList': [lang for lang in project.language.split(', ') if lang]
         }})
 
     language_choices = {}
-    for lang in dir(Project.ProgramLanguage):
+    for lang in Project.ProgramLanguage.__members__:
         if lang.startswith('_'):
             continue
 
@@ -69,7 +69,9 @@ def portfolio(request):
             'defaultImage': r"main/img/placeholder.png",
             "language_choices": language_choices,
             'data_filter_personal_status': personal_choices,
-            'filterList': json.dumps(filter_list_context)
+            'filterList': json.dumps(filter_list_context),
+            'page_title': "Portfolio - Jason Peck",
+            'page_description': "A selection of professional and personal software projects by Jason Peck, in Python, JavaScript, SQL, PowerShell and more."
         })
 
 def build_portfolio_context(language_choices, personal_choices):
@@ -79,24 +81,43 @@ def build_portfolio_context(language_choices, personal_choices):
     }
 
 
-def project(request):
-    request_id = request.GET.get('id')
-    project = Project.objects.get(title=request_id)
-
-    if project.html_project:
-        return render(
-                    request,
-                    'main/project_html.html',
-                    context={
-                        "project": project,
-                        "images": [img for img in ProjectImage.objects.all().filter(linkedProject=project)]})
+def project(request, slug):
+    project = get_object_or_404(Project, slug=slug)
 
     return render(
         request,
         'main/project_general.html',
         context={
             "project": project,
-            "images": [img for img in ProjectImage.objects.all().filter(linkedProject=project)]})
+            "images": [img for img in ProjectImage.objects.all().filter(linkedProject=project)],
+            "page_title": f"{project.title} - Jason Peck",
+            "page_description": project.briefDescription})
+
+def legacy_project_redirect(request):
+    """Permanently redirects the old /project/?id=<title> URLs to their slug URL."""
+    title = request.GET.get('id')
+
+    # Titles are not unique, so match the first rather than risk MultipleObjectsReturned.
+    project = Project.objects.filter(title=title).first() if title else None
+
+    if project is None:
+        raise Http404("No project matches the requested title.")
+
+    return redirect(project, permanent=True)
+
+def preview_error_page(request, code):
+    """Renders 404.html / 500.html at their real status, for development only.
+
+    Django swaps in its own debug 404 whenever DEBUG is True, so the styled
+    template is otherwise impossible to look at without turning DEBUG off --
+    which also stops runserver serving static files and switches on the HTTPS
+    redirect. This route sidesteps both.
+    """
+    if not settings.DEBUG:
+        raise Http404("Error page previews are a development-only route.")
+
+    return render(request, f"{code}.html", status=int(code))
+
 
 def contact(request):
     if request.method == 'POST':
@@ -110,7 +131,9 @@ def contact(request):
         'main/contact.html',
         context={
             'form': form,
-            "google_recaptcha_site_key": settings.GOOGLE_RECAPTCHA_SITE_KEY})
+            "google_recaptcha_site_key": settings.GOOGLE_RECAPTCHA_SITE_KEY,
+            "page_title": "Contact - Jason Peck",
+            "page_description": "Get in touch with Jason Peck about a project, a role or a question."})
 
 def _get_contact_post_form(request):
     form = ContactMeForm(request.POST)

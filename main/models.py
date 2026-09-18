@@ -2,6 +2,8 @@ from django.db import models
 from django.db.models.query_utils import Q
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from django.urls import reverse
+from django.utils.text import slugify
 
 class Job(models.Model):
     employer = models.CharField(max_length=200)
@@ -37,12 +39,19 @@ class Skill(models.Model):
 
 class Project(models.Model):
     title = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=220, unique=True, blank=True)
     briefDescription = models.CharField(max_length=500, verbose_name="Brief Description")
     content = models.TextField()
 
     githubLink = models.URLField(max_length=200, blank=True, null=True, verbose_name="Github Link")
 
-    html_project = models.BooleanField(default=False, verbose_name="HTML Project")
+    # Whether a project is personal used to be inferred from githubLink being
+    # set, which conflated two unrelated facts: a professional project can have
+    # public source, and a personal one need not.
+    is_personal = models.BooleanField(
+        default=True,
+        verbose_name="Personal project",
+        help_text="Personal projects are shown in the accent colour; professional ones in purple.")
 
     demoVideo = models.FileField(
         upload_to="demoVideo",
@@ -64,6 +73,31 @@ class Project(models.Model):
 
     language = models.CharField(default=ProgramLanguage.Unspecified,
                                 max_length=200)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self._build_unique_slug()
+
+        super().save(*args, **kwargs)
+
+    def _build_unique_slug(self):
+        base = slugify(self.title) or "project"
+        slug = base
+        suffix = 2
+
+        taken = Project.objects.exclude(pk=self.pk)
+        while taken.filter(slug=slug).exists():
+            slug = f"{base}-{suffix}"
+            suffix += 1
+
+        return slug
+
+    @property
+    def kind(self):
+        return "Personal" if self.is_personal else "Professional"
+
+    def get_absolute_url(self):
+        return reverse("main:project", kwargs={"slug": self.slug})
 
     def __str__(self):
         return self.title
