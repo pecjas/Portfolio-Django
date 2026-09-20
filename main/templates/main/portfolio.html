@@ -5,7 +5,7 @@
 <div class="container section stack">
     <div>
         <h1 class="page-title">Portfolio</h1>
-        <p class="lede">Professional and personal projects. Filter by language or project type.</p>
+        <p class="lede">{% if capability_choices %}Professional and personal projects, filterable by the kind of work, the project type or the language.{% else %}Professional and personal projects. Filter by language or project type.{% endif %}</p>
     </div>
 
     <p class="legend">
@@ -18,6 +18,26 @@
         <div class="filters__row">
         <span class="filters__label">Filter</span>
 
+        {% comment %}Capability is the primary axis: it is what a hiring manager
+        screens on, where language is a detail. Rendered only when a project
+        actually claims one, so an unfilled taxonomy degrades to the previous
+        two-filter page rather than advertising the gap.{% endcomment %}
+        {% if capability_choices %}
+        <div class="menu" data-menu>
+            <button class="btn btn--ghost" type="button" data-menu-button aria-expanded="false" aria-controls="menu-capability">
+                Kind of work
+                <svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </button>
+            <ul class="menu__panel" id="menu-capability" data-menu-panel hidden>
+                {% for capability in capability_choices %}
+                <li>
+                    <button type="button" data-filter-value="{{ capability.skill.slug }}" data-filter-category="data-filter-capability" data-filter-label="{{ capability.skill.skill }}" aria-pressed="false">{{ capability.skill.skill }}<span class="menu__count" aria-hidden="true">{{ capability.count }}</span><span class="sr-only"> ({{ capability.count }} project{{ capability.count|pluralize }})</span></button>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
         <div class="menu" data-menu>
             <button class="btn btn--ghost" type="button" data-menu-button aria-expanded="false" aria-controls="menu-language">
                 Language
@@ -25,9 +45,11 @@
             </button>
             <ul class="menu__panel" id="menu-language" data-menu-panel hidden>
                 {% for language, languageDisplay in language_choices.items %}
+                {% if languageDisplay.count %}
                 <li>
-                    <button type="button" data-filter-value="{{ language }}" data-filter-category="data-filter-lang" aria-pressed="false">{{ languageDisplay }}</button>
+                    <button type="button" data-filter-value="{{ language }}" data-filter-category="data-filter-lang" data-filter-label="{{ languageDisplay.label }}" aria-pressed="false">{{ languageDisplay.label }}<span class="menu__count" aria-hidden="true">{{ languageDisplay.count }}</span><span class="sr-only"> ({{ languageDisplay.count }} project{{ languageDisplay.count|pluralize }})</span></button>
                 </li>
+                {% endif %}
                 {% endfor %}
             </ul>
         </div>
@@ -40,7 +62,7 @@
             <ul class="menu__panel" id="menu-kind" data-menu-panel hidden>
                 {% for type in data_filter_personal_status %}
                 <li>
-                    <button type="button" data-filter-value="{{ type }}" data-filter-category="data-filter-personal-status" aria-pressed="false">{{ type }}</button>
+                    <button type="button" data-filter-value="{{ type.label }}" data-filter-category="data-filter-personal-status" data-filter-label="{{ type.label }}" aria-pressed="false">{{ type.label }}<span class="menu__count" aria-hidden="true">{{ type.count }}</span><span class="sr-only"> ({{ type.count }} project{{ type.count|pluralize }})</span></button>
                 </li>
                 {% endfor %}
             </ul>
@@ -58,36 +80,38 @@
         </div>
     </div>
 
-    <div class="card-grid" id="cardContainer">
-        {% for project, projDetails in projects.items %}
-        <article class="card project-card {% if not project.is_personal %}project-card--professional{% endif %}"
-                 data-filter-lang="{{ projDetails.filterLang }}"
-                 data-filter-personal-status="{{ project.kind }}">
-            <div class="project-card__media">
-                {% if projDetails.image == None %}
-                <img src="{% static defaultImage %}" alt="" decoding="async"{% if forloop.counter > 3 %} loading="lazy"{% endif %}>
-                {% else %}
-                <img src="{{ projDetails.image }}" alt="Preview of {{ project.title }}" decoding="async"{% if forloop.counter > 3 %} loading="lazy"{% endif %}>
-                {% endif %}
+    {% comment %}Two labelled sections when anything is featured, one unlabelled
+    grid when nothing is — the latter being exactly the pre-Phase-3 page. The
+    wrapper keeps its id either way so the filter script has one root and does
+    not need to know which shape it is looking at.{% endcomment %}
+    <div id="cardContainer">
+        {% if featured_projects %}
+        <section class="work-section work-section--featured" data-work-section>
+            <h2 class="work-section__title">Featured work</h2>
+            <div class="card-grid">
+                {% for project, projDetails in featured_projects %}
+                {% include "main/includes/project_card.html" with card_heading="3" %}
+                {% endfor %}
             </div>
-            <div class="card__body project-card__body">
-                <h2 class="card__title">{{ project.title }}</h2>
+        </section>
 
-                <ul class="project-card__tags">
-                    <li class="tag tag--kind">{{ project.kind }}</li>
-                    {% for lang in projDetails.languageList %}
-                    <li class="tag">{{ lang }}</li>
-                    {% endfor %}
-                </ul>
-
-                <p class="card__text">{{ project.briefDescription }}</p>
-
-                <p class="project-card__link">
-                    <a href="{% url 'main:project' project.slug %}">View project<span class="sr-only"> {{ project.title }}</span> &rarr;</a>
-                </p>
+        {% if other_projects %}
+        <section class="work-section work-section--more" data-work-section>
+            <h2 class="work-section__title">More projects</h2>
+            <div class="card-grid card-grid--archive">
+                {% for project, projDetails in other_projects %}
+                {% include "main/includes/project_card.html" with card_heading="3" %}
+                {% endfor %}
             </div>
-        </article>
-        {% endfor %}
+        </section>
+        {% endif %}
+        {% else %}
+        <div class="card-grid">
+            {% for project, projDetails in projects.items %}
+            {% include "main/includes/project_card.html" %}
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 
     <p class="empty-state" id="filter-empty" hidden>

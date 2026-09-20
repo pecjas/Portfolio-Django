@@ -1,27 +1,90 @@
+from collections import Counter
+
+from django.db.models import Count, F, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.http import Http404, HttpResponse
 from .forms import ContactMeForm
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.contrib import messages
-from .models import Project, ProjectImage, Job, JobDetail, Education, Skill
+from .models import (Education, Job, Project, ProjectImage, Skill,
+                     language_project_counts)
 import requests
 import json
 
-def index(request):
-    # prefetch_related pulls every job's details in one extra query rather than
-    # one query per job.
-    jobs = Job.objects.order_by('-startDate').prefetch_related('jobdetail_set')
+# Display order for the skills section, and the heading each group gets. The
+# model's own ordering is alphabetical on the stored value, which would put
+# "practice" above "tooling" and capabilities nowhere in particular.
+SKILL_GROUPS = [
+    (Skill.Category.CAPABILITY, "What I do"),
+    (Skill.Category.LANGUAGE, "Languages"),
+    (Skill.Category.PLATFORM, "Platforms and frameworks"),
+    (Skill.Category.TOOLING, "Tooling"),
+    (Skill.Category.PRACTICE, "Ways of working"),
+]
 
-    job_and_detail = {job: list(job.jobdetail_set.all()) for job in jobs}
+
+def build_skill_groups():
+    """Skills grouped by category, each with the evidence behind it.
+
+    A count makes the list an index rather than a claim, so it has to come from
+    the same place the portfolio filters read. Capabilities are counted through
+    the Skill -> Project relation; languages are counted from Project.language,
+    which is what the language filter actually matches on. Counting both from
+    the relation would show a number that the link then contradicts.
+    """
+    # Unpublished projects are not evidence of anything, so they do not count
+    # toward a skill either.
+    skills = (Skill.objects
+              .annotate(project_count=Count(
+                  "projects", filter=Q(projects__published=True)))
+              .order_by("sort_order", "skill"))
+
+    language_counts = language_project_counts()
+
+    filter_keys = {
+        lang.value.casefold(): lang.name
+        for lang in Project.ProgramLanguage
+    }
+
+    groups = []
+    for category, label in SKILL_GROUPS:
+        entries = []
+
+        for skill in (s for s in skills if s.category == category):
+            count = skill.project_count
+            url = ""
+
+            if category == Skill.Category.CAPABILITY and count:
+                url = f"{reverse('main:portfolio')}?work={skill.slug}"
+
+            elif category == Skill.Category.LANGUAGE:
+                count = language_counts.get(skill.skill.casefold(), 0)
+                key = filter_keys.get(skill.skill.casefold())
+                if count and key:
+                    url = f"{reverse('main:portfolio')}?lang={key}"
+
+            entries.append({"skill": skill.skill, "count": count, "url": url})
+
+        if entries:
+            groups.append({"label": label, "skills": entries})
+
+    return groups
+
+
+def index(request):
+    # Bullets live on the job now, so there is no second table to prefetch and
+    # no job-to-bullets mapping to build.
+    jobs = Job.objects.order_by('-startDate')
 
     return render(
         request,
         "main/home.html",
         context={
-            "jobs": job_and_detail,
+            "jobs": jobs,
             "education": Education.objects.all(),
-            "skills": Skill.objects.all().order_by('skill'),
+            "skill_groups": build_skill_groups(),
             "page_title": "Jason Peck - Solution Architect",
             "page_description": "Jason Peck is a Solution Architect working on system integrations, from healthcare interoperability to enterprise process automation, in TypeScript, JavaScript and Python."})
 
@@ -34,19 +97,48 @@ def portfolio(request):
 
     allProjects = {}
 
-    for project in Project.objects.all():
+    # Featured first, then anything given a manual order, then most recent,
+    # then alphabetical.
+    #
+    # Both nulls_last matter and they mean different things. On sort_order it
+    # keeps the unranked projects below the ranked ones, so a manual number
+    # promotes rather than demotes. On startDate it keeps an undated project
+    # from outranking a dated one by accident.
+    #
+    # The manual order is applied across the whole set and the featured split
+    # happens afterwards, so a number ranks a project within its own section
+    # rather than moving it between sections.
+    ordered = (Project.objects
+               .filter(published=True)
+               .order_by('-featured',
+                         F('sort_order').asc(nulls_last=True),
+                         F('startDate').desc(nulls_last=True),
+                         'title')
+               .prefetch_related('skills'))
+
+    # prefetch_related keeps the capability lookup below to one extra query
+    # rather than one per project.
+    for index, project in enumerate(ordered):
         image = main_images.get(project)
 
         filter_lang = project.language
         filter_lang = filter_lang.split(', ')
         filter_lang = ' '.join([Project.ProgramLanguage(lang).name for lang in filter_lang])
 
+        capabilities = project.capabilities
+
         allProjects.update({project: {
             'image': image,
             'filterLang': filter_lang,
             'filterPersonalStatus': project.kind,
             # Display names, as opposed to filterLang's underscored filter keys.
-            'languageList': [lang for lang in project.language.split(', ') if lang]
+            'languageList': [lang for lang in project.language.split(', ') if lang],
+            'filterCapability': ' '.join(c.slug for c in capabilities),
+            'capabilityList': capabilities,
+            'supportingList': project.supporting_skills,
+            # Counted across both sections, so the three images above the fold
+            # load eagerly wherever they happen to sit.
+            'lazy': index >= 3,
         }})
 
     language_choices = {}
@@ -58,27 +150,76 @@ def portfolio(request):
 
     personal_choices = ['Personal', 'Professional']
 
-    filter_list_context = build_portfolio_context(language_choices, personal_choices)
+    # Only capabilities that at least one published project claims. An empty
+    # filter option is worse than no option: it advertises a gap rather than
+    # hiding it. The count comes from the same pass, so what the menu promises
+    # and what the filter returns cannot disagree.
+    capability_counts = Counter()
+    for details in allProjects.values():
+        for capability in details['capabilityList']:
+            capability_counts[capability.pk] += 1
 
+    capability_choices = [
+        {'skill': skill, 'count': capability_counts[skill.pk]}
+        for skill in Skill.objects.filter(category=Skill.Category.CAPABILITY)
+        if capability_counts[skill.pk]
+    ]
+
+    # Same idea for the language menu, counted off the language strings the
+    # filter actually matches on.
+    language_counts = Counter()
+    for project, details in allProjects.items():
+        for name in details['languageList']:
+            language_counts[name] += 1
+
+    # Unspecified is the model default rather than a language, so it is not
+    # offered as a filter any more than it is rendered on a card.
+    language_choices = {
+        key: {'label': value, 'count': language_counts[str(value)]}
+        for key, value in language_choices.items()
+        if key != Project.ProgramLanguage.Unspecified.name
+    }
+
+    kind_counts = Counter(project.kind for project in allProjects)
+
+    filter_list_context = build_portfolio_context(
+        language_choices, personal_choices, capability_choices)
+
+    personal_choices = [{'label': name, 'count': kind_counts[name]}
+                        for name in personal_choices]
+
+    # Rendered as two labelled sections when anything is featured, and as one
+    # unlabelled grid when nothing is — which is the pre-Phase-3 page exactly.
+    featured_projects = [(p, d) for p, d in allProjects.items() if p.featured]
+    other_projects = [(p, d) for p, d in allProjects.items() if not p.featured]
 
     return render(
         request,
         "main/portfolio.html",
         context={
             'projects': allProjects,
+            'featured_projects': featured_projects,
+            'other_projects': other_projects,
             'defaultImage': r"main/img/placeholder.png",
             "language_choices": language_choices,
             'data_filter_personal_status': personal_choices,
+            'capability_choices': capability_choices,
             'filterList': json.dumps(filter_list_context),
             'page_title': "Portfolio - Jason Peck",
-            'page_description': "A selection of professional and personal software projects by Jason Peck, in Python, JavaScript, SQL, PowerShell and more."
+            'page_description': "A selection of professional and personal software projects by Jason Peck, spanning system integration, healthcare interoperability, data pipelines and automation."
         })
 
-def build_portfolio_context(language_choices, personal_choices):
-    return {
+def build_portfolio_context(language_choices, personal_choices, capability_choices=()):
+    context = {
             'data-filter-personal-status': ' '.join(personal_choices),
             'data-filter-lang': ' '.join([lang for lang in language_choices.keys()])
     }
+
+    if capability_choices:
+        context['data-filter-capability'] = ' '.join(
+            entry['skill'].slug for entry in capability_choices)
+
+    return context
 
 
 def project(request, slug):

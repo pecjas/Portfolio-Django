@@ -73,16 +73,18 @@ text they render is already in the h1 above, so both are aria-hidden.{% endcomme
             </summary>
             <div class="accordion__panel">
                 <ul class="entries">
-                    {% for job, detailList in jobs.items %}
+                    {% for job in jobs %}
                     <li class="entry">
                         <h3 class="entry__title">{{ job.title }}</h3>
                         <p class="entry__org">{{ job.employer }}</p>
                         <p class="entry__dates">{{ job.startDate }} &ndash; {% if job.endDate is none %}Present{% else %}{{ job.endDate }}{% endif %}</p>
+                        {% if job.responsibility_lines %}
                         <ul class="entry__points">
-                            {% for detail in detailList %}
-                            <li>{{ detail.content }}</li>
+                            {% for line in job.responsibility_lines %}
+                            <li>{{ line }}</li>
                             {% endfor %}
                         </ul>
+                        {% endif %}
                     </li>
                     {% endfor %}
                 </ul>
@@ -99,13 +101,19 @@ text they render is already in the h1 above, so both are aria-hidden.{% endcomme
                 <ul class="entries">
                     {% for edu in education %}
                     <li class="entry">
-                        <h3 class="entry__title">{{ edu.degree }}</h3>
+                        <h3 class="entry__title">
+                            {{ edu.degree }}{% if edu.is_certificate %}<span class="entry__badge">Certificate</span>{% endif %}
+                        </h3>
                         <p class="entry__org">{{ edu.school }}</p>
-                        <p class="entry__dates">{{ edu.graduationDate }}</p>
+                        <p class="entry__dates">{% if edu.is_certificate %}Completed{% else %}Graduated{% endif %} {{ edu.graduationDate|date:"F Y" }}</p>
+                        {% comment %}Both rows below are optional now: a certificate
+                        has no GPA, and neither needs a note.{% endcomment %}
+                        {% if edu.GPA or edu.additionalInfo %}
                         <ul class="entry__points">
-                            <li>Overall GPA: {{ edu.GPA }}/4.000</li>
+                            {% if edu.GPA %}<li>Overall GPA: {{ edu.GPA }}/4.000</li>{% endif %}
                             {% if edu.additionalInfo %}<li>{{ edu.additionalInfo }}</li>{% endif %}
                         </ul>
+                        {% endif %}
                     </li>
                     {% endfor %}
                 </ul>
@@ -119,11 +127,28 @@ text they render is already in the h1 above, so both are aria-hidden.{% endcomme
                 <svg class="icon accordion__chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
             </summary>
             <div class="accordion__panel">
-                <ul class="skills">
-                    {% for skill in skills %}
-                    <li>{{ skill }}</li>
-                    {% endfor %}
-                </ul>
+                {% comment %}Grouped rather than one alphabetical run, and each
+                entry carries the number of projects behind it — so the list is
+                an index of evidence rather than a set of claims. Entries with
+                a matching portfolio filter link through to it; the rest stay
+                plain text so the list remains complete for keyword matching.
+                Deliberately no proficiency ratings.{% endcomment %}
+                {% for group in skill_groups %}
+                <div class="skill-group">
+                    <h3 class="skill-group__title">{{ group.label }}</h3>
+                    <ul class="skills">
+                        {% for entry in group.skills %}
+                        <li>
+                            {% if entry.url %}
+                            <a href="{{ entry.url }}">{{ entry.skill }}{% if entry.count %}<span class="skills__count" aria-hidden="true">{{ entry.count }}</span><span class="sr-only"> &mdash; {{ entry.count }} project{{ entry.count|pluralize }}</span>{% endif %}</a>
+                            {% else %}
+                            {{ entry.skill }}{% if entry.count %}<span class="skills__count" aria-hidden="true">{{ entry.count }}</span><span class="sr-only"> &mdash; {{ entry.count }} project{{ entry.count|pluralize }}</span>{% endif %}
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
             </div>
         </details>
     </div>
