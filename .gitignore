@@ -8,3 +8,4 @@ env/
 /static/
 .venv/
 TASKLIST.txt
+*.backup
