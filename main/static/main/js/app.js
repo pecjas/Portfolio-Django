@@ -316,6 +316,272 @@
     });
   }
 
+  /* Card summaries are clamped to three lines in CSS. The full text opens in
+     a popover rather than expanding in place: unclamping inline pushed every
+     card below it down the page, so the thing you were trying to read moved
+     while you read it.
+
+     Uses the Popover API, which renders in the top layer -- above every card,
+     immune to ancestor overflow and stacking contexts. Where that is missing,
+     the button falls back to expanding in place, which is worse but still
+     gets you the text. */
+  var POPOVER_SUPPORTED =
+    typeof HTMLElement !== "undefined" &&
+    typeof HTMLElement.prototype.showPopover === "function";
+
+  var GAP = 10;
+
+  /* Positioning only. Every way of opening a popover -- the button's
+     popovertarget, a hover, anything programmatic -- routes through its own
+     toggle event, so this runs from there rather than from each trigger.
+     Positioning from the click handler did not work: an invoker opens the
+     popover after event dispatch, so at click time it was still closed. */
+  /* The area the popover must not cover: the summary, plus the Show more
+     button when it is on screen. Anchoring to the summary alone put the
+     popover straight over the button on touch, where the button is the only
+     way to close it again. */
+  function anchorRect(summary, button) {
+    var box = summary.getBoundingClientRect();
+
+    if (!button || button.hidden ||
+        window.getComputedStyle(button).display === "none") {
+      return box;
+    }
+
+    var extra = button.getBoundingClientRect();
+
+    return {
+      left: Math.min(box.left, extra.left),
+      right: Math.max(box.right, extra.right),
+      top: Math.min(box.top, extra.top),
+      bottom: Math.max(box.bottom, extra.bottom),
+      width: Math.max(box.right, extra.right) - Math.min(box.left, extra.left)
+    };
+  }
+
+  function positionPopover(popover, box) {
+    var width = popover.offsetWidth;
+    var height = popover.offsetHeight;
+
+    var left = box.left + box.width / 2 - width / 2;
+    left = Math.max(GAP, Math.min(left, window.innerWidth - width - GAP));
+
+    var top = box.bottom + GAP;
+    if (top + height > window.innerHeight - GAP) {
+      var above = box.top - height - GAP;
+      if (above >= GAP) top = above;
+    }
+
+    // Clamp last, and against both edges. Checking only the top edge let an
+    // anchor that was itself below the fold place the popover off-screen --
+    // "above" an off-screen element is still off-screen.
+    top = Math.min(top, window.innerHeight - height - GAP);
+    top = Math.max(GAP, top);
+
+    popover.style.left = Math.round(left) + "px";
+    popover.style.top = Math.round(top) + "px";
+  }
+
+  function initSummaries() {
+    var cards = document.querySelectorAll(".project-card");
+    if (!cards.length) return;
+
+    var hoverable = window.matchMedia("(hover: hover) and (pointer: fine)");
+    var counter = 0;
+
+    /* Only one auto popover can be open at a time, so one pair of globals is
+       enough, and one scroll listener rather than one per card. */
+    var openPopover = null;
+    var openAnchor = null;
+    var frame = 0;
+
+    function follow() {
+      frame = 0;
+      if (!openPopover || !openAnchor) return;
+
+      var box = anchorRect(openAnchor.summary, openAnchor.button);
+
+      // Scrolled past the card it belongs to: close rather than leave it
+      // clamped to the viewport edge, detached from anything.
+      if (box.bottom < 0 || box.top > window.innerHeight) {
+        openPopover.hidePopover();
+        return;
+      }
+
+      positionPopover(openPopover, box);
+    }
+
+    function schedule() {
+      /* Cancel and re-request rather than guarding with a boolean. A tab that
+         is hidden mid-scroll never runs the frame, which would leave a "queued"
+         flag latched true and stop every later scroll from scheduling
+         anything. Replacing the handle cannot latch. */
+      if (frame) window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(follow);
+    }
+
+    /* Scrolling used to close the popover. That left it unopenable: the card
+       moves under a stationary cursor without firing mouseenter again, so
+       nothing reopened it until you left the card and came back. It now
+       follows the anchor instead. */
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && openPopover) openPopover.hidePopover();
+    });
+
+    cards.forEach(function (card) {
+      var summary = card.querySelector(".project-card__summary");
+      var title = card.querySelector(".card__title");
+      if (!summary) return;
+
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "card__more";
+      button.hidden = true;
+      button.setAttribute("aria-expanded", "false");
+      button.textContent = "Show more";
+      summary.insertAdjacentElement("afterend", button);
+
+      var popover = null;
+      var pointerInside = false;
+      var dismissed = false;
+
+      if (POPOVER_SUPPORTED) {
+        counter += 1;
+        popover = document.createElement("div");
+        popover.className = "summary-popover";
+        popover.id = "summary-popover-" + counter;
+        /* Manual, not auto: an auto popover light-dismisses on any outside
+           click, so clicking the card you were reading closed it. That also
+           means closing the previous one and handling Escape are ours to do,
+           both below. */
+        popover.setAttribute("popover", "manual");
+
+        if (title) {
+          var heading = document.createElement("span");
+          heading.className = "summary-popover__title";
+          heading.textContent = title.textContent.trim();
+          popover.appendChild(heading);
+        }
+
+        var body = document.createElement("p");
+        body.textContent = summary.textContent.trim();
+        popover.appendChild(body);
+
+        document.body.appendChild(popover);
+
+        // The browser wires up toggling and the implicit relationship.
+        button.setAttribute("popovertarget", popover.id);
+
+        // Hidden between being shown and being placed, so it never paints a
+        // frame in the default centred position first.
+        popover.addEventListener("beforetoggle", function (event) {
+          if (event.newState === "open") popover.style.visibility = "hidden";
+        });
+
+        popover.addEventListener("toggle", function (event) {
+          var isOpen = event.newState === "open";
+
+          button.setAttribute("aria-expanded", String(isOpen));
+          button.textContent = isOpen ? "Show less" : "Show more";
+
+          if (isOpen) {
+            if (openPopover && openPopover !== popover) openPopover.hidePopover();
+
+            positionPopover(popover, anchorRect(summary, button));
+            popover.style.visibility = "";
+            openPopover = popover;
+            openAnchor = { summary: summary, button: button };
+          } else {
+            if (openPopover === popover) {
+              openPopover = null;
+              openAnchor = null;
+            }
+
+            // Closed by Escape or the button while the pointer is still over
+            // the card: do not immediately reopen it from under them.
+            if (pointerInside) dismissed = true;
+          }
+        });
+
+        var open = function () {
+          if (!button.hidden && !popover.matches(":popover-open")) {
+            popover.showPopover();
+          }
+        };
+        var close = function () {
+          if (popover.matches(":popover-open")) popover.hidePopover();
+        };
+
+        /* Bound to the summary and nothing else. The popover shows the three
+           clamped lines in full, so those three lines are the only thing that
+           should summon it -- not the tags, not the languages, not the link
+           row, and not the popover itself. */
+        function reveal() {
+          if (!hoverable.matches || dismissed) return;
+
+          if (popover.matches(":popover-open")) {
+            // Already open: make sure it is still where the card is. Scroll
+            // events do not fire in a tab the browser has stopped rendering,
+            // so the position can be stale by the time the pointer moves.
+            follow();
+          } else {
+            open();
+          }
+        }
+
+        summary.addEventListener("mouseenter", function () {
+          pointerInside = true;
+          dismissed = false;
+          reveal();
+        });
+
+        // The safety net for the stationary-cursor case: after a scroll the
+        // pointer can already be over a summary it never "entered".
+        summary.addEventListener("mousemove", reveal);
+
+        summary.addEventListener("mouseleave", function () {
+          pointerInside = false;
+          dismissed = false;
+          if (hoverable.matches) close();
+        });
+
+        /* No focus trigger. Tabbing to the card's link -- or clicking it,
+           which focuses it -- opened the description, which is one of the
+           "any other time" cases. The clamp is visual only, so the full text
+           is still read by assistive tech straight from the card, and the
+           project page carries it in full. */
+
+      } else {
+        button.addEventListener("click", function () {
+          var expanded = summary.classList.toggle("is-expanded");
+          button.setAttribute("aria-expanded", String(expanded));
+          button.textContent = expanded ? "Show less" : "Show more";
+        });
+      }
+
+      function measure() {
+        if (summary.classList.contains("is-expanded")) return;
+
+        var clipped = summary.scrollHeight > summary.clientHeight + 1;
+        if (clipped === !button.hidden) return;
+
+        button.hidden = !clipped;
+        summary.classList.toggle("is-clipped", clipped);
+      }
+
+      measure();
+
+      if (window.ResizeObserver) {
+        new window.ResizeObserver(measure).observe(summary);
+      } else {
+        window.addEventListener("resize", measure);
+      }
+    });
+  }
+
   function ready(fn) {
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", fn);
@@ -330,6 +596,7 @@
     initMenus();
     initToasts();
     initLightbox();
+    initSummaries();
     markCurrentPage();
   });
 })();

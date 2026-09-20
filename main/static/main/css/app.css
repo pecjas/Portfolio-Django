@@ -69,6 +69,19 @@
   --space-7: 3rem;
   --space-8: 4rem;
 
+  /* Grouping planes. The featured panel is a wash over the page rather than a
+     fixed colour, so it tracks the gradient underneath instead of fighting it:
+     1.23-1.32:1 against the page at every gradient stop, which reads as a
+     distinct plane without becoming a block of colour. */
+  --panel-wash: rgba(255, 255, 255, 0.32);
+  --panel-border: rgba(36, 24, 51, 0.16);
+  --rule: rgba(36, 24, 51, 0.28);
+
+  /* Muted text that sits on the page rather than on a card. --text-muted is
+     built for dark surfaces and renders at 1.01:1 on the light page gradient,
+     which is why the section headings were invisible in light mode. */
+  --text-on-page-muted: #4A3A5C;
+
   --radius: 6px;
   --radius-lg: 12px;
   --nav-height: 60px;
@@ -104,6 +117,14 @@
     --border: rgba(255, 255, 255, 0.1);
     --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
     --shadow-2: 0 4px 10px rgba(0, 0, 0, 0.55), 0 12px 28px rgba(0, 0, 0, 0.4);
+
+    /* Dark cards sit only 1.11:1 above the dark page, so lightening the panel
+       would close what little separation they have. It darkens instead, and
+       the border does the defining. */
+    --panel-wash: rgba(0, 0, 0, 0.35);
+    --panel-border: rgba(255, 255, 255, 0.14);
+    --rule: rgba(255, 255, 255, 0.16);
+    --text-on-page-muted: #B4C1C4;
   }
 }
 
@@ -125,6 +146,14 @@
   --border: rgba(255, 255, 255, 0.1);
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
   --shadow-2: 0 4px 10px rgba(0, 0, 0, 0.55), 0 12px 28px rgba(0, 0, 0, 0.4);
+
+  /* Dark cards sit only 1.11:1 above the dark page, so lightening the panel
+     would close what little separation they have. It darkens instead, and the
+     border does the defining. */
+  --panel-wash: rgba(0, 0, 0, 0.35);
+  --panel-border: rgba(255, 255, 255, 0.14);
+  --rule: rgba(255, 255, 255, 0.16);
+  --text-on-page-muted: #B4C1C4;
 }
 
 :root[data-theme="light"] { color-scheme: light; }
@@ -529,6 +558,7 @@ ul, ol { margin: 0; padding: 0; }
 }
 
 .availability__dot {
+  position: relative;
   flex: none;
   width: 9px;
   height: 9px;
@@ -536,6 +566,35 @@ ul, ol { margin: 0; padding: 0; }
   background: #4ade80;
   box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.22);
   translate: 0 -1px;
+}
+
+/* A ring that expands out of the dot and fades, so "open to work" reads as
+   live rather than printed.
+
+   Animates transform and opacity only — both composite on the GPU. Animating
+   the box-shadow spread instead would repaint the card on every frame for the
+   same visual result.
+
+   Base state is transparent, so when the reduced-motion rule below stops the
+   animation the dot falls back to exactly its previous static appearance. */
+.availability__dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #4ade80;
+  opacity: 0;
+  animation: availability-pulse 2.6s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+}
+
+@keyframes availability-pulse {
+  0%   { opacity: 0.5; transform: scale(1); }
+  70%  { opacity: 0; transform: scale(3.2); }
+  100% { opacity: 0; transform: scale(3.2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .availability__dot::after { animation: none; }
 }
 
 @media (min-width: 40rem) {
@@ -603,10 +662,275 @@ ul, ol { margin: 0; padding: 0; }
   font-weight: 600;
 }
 
+/* Marks a credential that is not a degree, so the two scan as different
+   things without relying on the wording of the title. */
+.entry__badge {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 1px var(--space-2);
+  border: 1px solid rgba(128, 128, 128, 0.6);
+  border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  vertical-align: middle;
+}
+
+/* Featured work, then everything else. The heading is the whole point: nine
+   projects presented as equals let a side-scroller sit beside patient-safety
+   work with nothing to tell them apart. */
+.work-section + .work-section { margin-top: var(--space-8); }
+
+.work-section__title {
+  margin: 0 0 var(--space-5);
+  text-align: center;
+  font-size: var(--text-lg);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-on-page-muted);
+}
+
+/* Featured work sits on its own plane.
+
+   Five featured projects wrap as three and then two, and the leftover slot was
+   read as a card that had failed to load: the grid centres a short row, so the
+   gap arrives split in half either side of it, looking like two holes rather
+   than one ending. Inside a panel the same pixels are padding. Nothing about
+   the cards changes -- this is a container drawn around the group. */
+.work-section--featured {
+  background: var(--panel-wash);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+
+  /* The panel hugs whatever is left after filtering. Filter to one featured
+     project and a full-width box around a single card reproduces the problem
+     this is here to fix, at a larger size. Unfiltered it still reaches the
+     full width, so it lines up with the grid below. */
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+@media (min-width: 40rem) {
+  .work-section--featured { padding: var(--space-6); }
+}
+
+/* And a stated edge before the rest, because the gap alone was only twice the
+   gap between card rows -- too close to read as a boundary. The label sits on
+   the rule rather than floating above it, so the two say one thing. */
+.work-section--more .work-section__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.work-section--more .work-section__title::before,
+.work-section--more .work-section__title::after {
+  content: "";
+  flex: 1 1 0;
+  height: 1px;
+  background: var(--rule);
+}
+
+/* The archive is denser and its imagery shorter, so the eye reaches Selected
+   work first without the older projects being hidden. */
+.card-grid--archive > * { flex: 1 1 14rem; max-width: 18rem; }
+
+.card-grid--archive .project-card__media { aspect-ratio: 16 / 7; }
+
+.project-card__dates {
+  margin: calc(var(--space-1) * -1) 0 var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Capability tags carry the card. Outlined in the accent rather than filled,
+   so they read as prominent without competing with the filled kind tag. */
+.tag--capability {
+  border-color: var(--kind);
+  color: var(--text-on-surface);
+  font-weight: 600;
+}
+
+/* Languages and platforms: present for keyword matching and for the engineer
+   who wants the detail, deliberately quiet for everyone else. No pills, no
+   borders — a plain dot-separated run of text. */
+.project-card__tech {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.project-card__tech li + li::before {
+  content: "·";
+  margin-right: var(--space-2);
+}
+
+.project-card__tech:empty { display: none; }
+
+/* The outcome is the line a hiring manager is looking for, so it sits above
+   the description and in full-strength text rather than the muted card copy. */
+.project-card__outcome {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+  color: var(--text-on-surface);
+  line-height: 1.4;
+}
+
+/* Card summaries run from 82 to 431 characters, so long ones swamped their
+   cards and broke row alignment. Clamped here rather than truncated server
+   side, so the detail page and search engines still get the whole sentence. */
+.project-card__summary {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+/* The full text is always in the DOM -- the clamp only hides it visually, so
+   screen readers and search engines still get the whole sentence. These rules
+   are what let a reader get at it too. */
+.project-card__summary.is-expanded {
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+}
+
+/* Hovering used to unclamp the text in place, which pushed every card below it
+   down the page -- unreadable while it moved. The full text now opens in a
+   popover instead, so the grid never shifts. This rule is only the fallback
+   for browsers without the Popover API. */
+@media (hover: hover) and (pointer: fine) {
+  /* Redundant where hovering already opens the popover. */
+  .card__more { display: none; }
+}
+
+/* Floating summary. Rendered in the browser's top layer, so it sits above
+   every card regardless of stacking context and cannot be clipped by an
+   ancestor's overflow. */
+.summary-popover {
+  position: fixed;
+  width: min(22rem, calc(100vw - 2rem));
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  color: var(--text-on-surface);
+  box-shadow: 0 18px 40px rgba(10, 6, 18, 0.45);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  overflow: visible;
+}
+
+.summary-popover::backdrop { background: transparent; }
+
+.summary-popover__title {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.summary-popover p { margin: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .summary-popover {
+    animation: summary-popover-in 120ms ease-out;
+  }
+}
+
+@keyframes summary-popover-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ...but a touch-capable device gets the button back, including hybrids that
+   report a fine pointer for their trackpad. */
+@media (any-pointer: coarse) {
+  .card__more { display: inline-flex; }
+}
+
+.card__more {
+  align-self: flex-start;
+  margin-top: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.card__more:hover { text-decoration: underline; }
+
+/* Counts in the filter menus: what a filter will return, before it is used. */
+.menu__count {
+  display: inline-block;
+  min-width: 1.5em;
+  margin-left: var(--space-2);
+  padding: 0 0.3em;
+  border-radius: 999px;
+  background: rgba(128, 128, 128, 0.18);
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* Detail page outcome. --surface-raised is dark in both schemes, so the text
+   colour has to be pinned the way .panel pins it; inheriting the page colour
+   put dark text on a dark panel in light mode. */
+.outcome {
+  max-width: var(--measure);
+  margin-inline: auto;
+  padding: var(--space-4) var(--space-5);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  color: var(--text-on-surface);
+  font-size: var(--text-lg);
+  line-height: 1.45;
+}
+
+.outcome__label {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* The anchor used to be a 109px inline box inside a 300x42 paragraph, so the
+   padding above it and the space beside it showed the text I-beam right next
+   to the link's own pointer. Making the anchor fill the row means the cursor
+   is a pointer wherever it says "View project", and gives the link a bigger
+   target while we are at it. */
 .project-card__link {
   margin-top: auto;
-  padding-top: var(--space-4);
   font-weight: 600;
+}
+
+.project-card__link a {
+  display: block;
+  padding-top: var(--space-4);
 }
 
 /* --------------------------------------------------------------------------
@@ -704,6 +1028,59 @@ ul, ol { margin: 0; padding: 0; }
   border-radius: 999px;
   font-size: var(--text-sm);
 }
+
+/* Grouped, because "Critical Thinking" sitting alphabetically beside "C#" told
+   a reader nothing about what is depth and what is a footnote. */
+.skill-group + .skill-group { margin-top: var(--space-5); }
+
+.skill-group__title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* A linked skill is one with projects behind it, so it gets the affordance;
+   the padding lives on the anchor so the whole pill is the target. */
+.skills li:has(a) { padding: 0; }
+
+.skills li a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: 999px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.skills li a:hover { background: var(--surface-sunken); }
+
+.skills li a:hover .skills__count { border-color: currentColor; }
+
+/* The count is the evidence. Outlined rather than filled so it reads as a
+   footnote to the skill, not a badge competing with it. */
+.skills__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35em;
+  height: 1.35em;
+  margin-left: var(--space-2);
+  padding: 0 0.3em;
+  /* var(--border) measured 1.55:1 here — below the 3:1 non-text minimum and,
+     more to the point, invisible. A fraction of currentColor tracks the
+     numeral's own colour, so it holds in both schemes: 3.68:1 in dark. */
+  border: 1px solid rgba(128, 128, 128, 0.6);
+  border: 1px solid color-mix(in srgb, currentColor 60%, transparent);
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.skills li a .skills__count { margin-left: 0; }
 
 /* --------------------------------------------------------------------------
    10. Buttons

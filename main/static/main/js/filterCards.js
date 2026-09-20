@@ -17,7 +17,18 @@
   /* How often the reconciler checks whether the URL has fallen behind. */
   var URL_RECONCILE_MS = 600;
 
-  var CATEGORIES = ["data-filter-lang", "data-filter-personal-status"];
+  /* Which query parameter each category reads and writes. Categories
+     themselves are discovered from the DOM at init, in the order the template
+     renders their menus, so a group the server chose not to render simply does
+     not participate — that is how the capability filter stays absent until
+     projects claim one, with no flag to keep in sync here. */
+  var CATEGORY_PARAMS = {
+    "data-filter-capability": "work",
+    "data-filter-lang": "lang",
+    "data-filter-personal-status": "kind"
+  };
+
+  var CATEGORIES = [];
 
   var cards = [];
   var selected = {};
@@ -67,6 +78,15 @@
         ? "Showing all " + cards.length + " projects"
         : "Showing " + shown.length + " of " + cards.length + " projects";
     }
+
+    /* A section whose cards have all been filtered out must take its heading
+       with it, or "Selected work" sits above nothing. */
+    document.querySelectorAll("[data-work-section]").forEach(function (section) {
+      var inSection = section.querySelectorAll("[data-filter-lang]");
+      section.hidden = !Array.prototype.some.call(inSection, function (card) {
+        return !card.hidden;
+      });
+    });
 
     if (elements.empty) elements.empty.hidden = shown.length !== 0;
 
@@ -187,12 +207,10 @@
   function currentQuery() {
     var params = new URLSearchParams();
 
-    if (selectedIn("data-filter-lang").length) {
-      params.set("lang", selectedIn("data-filter-lang").join(","));
-    }
-    if (selectedIn("data-filter-personal-status").length) {
-      params.set("kind", selectedIn("data-filter-personal-status").join(","));
-    }
+    CATEGORIES.forEach(function (category) {
+      var chosen = selectedIn(category);
+      if (chosen.length) params.set(CATEGORY_PARAMS[category], chosen.join(","));
+    });
 
     return params.toString();
   }
@@ -225,21 +243,26 @@
   }
 
   function readUrl() {
-    if (!SYNC_URL_TO_FILTERS) {
-      selected["data-filter-lang"] = [];
-      selected["data-filter-personal-status"] = [];
-      return;
-    }
+    var params = SYNC_URL_TO_FILTERS
+      ? new URLSearchParams(window.location.search)
+      : new URLSearchParams();
 
-    var params = new URLSearchParams(window.location.search);
-
-    selected["data-filter-lang"] = (params.get("lang") || "").split(",").filter(Boolean);
-    selected["data-filter-personal-status"] = (params.get("kind") || "").split(",").filter(Boolean);
+    CATEGORIES.forEach(function (category) {
+      var raw = params.get(CATEGORY_PARAMS[category]) || "";
+      selected[category] = raw.split(",").filter(Boolean);
+    });
   }
 
   function init() {
     var container = document.getElementById("cardContainer");
     if (!container) return;
+
+    /* Menu order is the template's call, and the template leads with the
+       primary axis. Reading it here keeps that decision in one place. */
+    document.querySelectorAll("[data-filter-value]").forEach(function (button) {
+      var category = button.dataset.filterCategory;
+      if (CATEGORIES.indexOf(category) === -1) CATEGORIES.push(category);
+    });
 
     cards = Array.prototype.slice.call(container.querySelectorAll("[data-filter-lang]"));
     elements.count = document.getElementById("filter-count");
@@ -250,7 +273,10 @@
     readUrl();
 
     document.querySelectorAll("[data-filter-value]").forEach(function (button) {
-      labels[button.dataset.filterCategory + "|" + button.dataset.filterValue] = button.textContent.trim();
+      /* Prefer the explicit label: the button's text now also contains a
+         result count, and a chip reading "Systems Integration 5" is wrong. */
+      labels[button.dataset.filterCategory + "|" + button.dataset.filterValue] =
+        button.dataset.filterLabel || button.textContent.trim();
 
       button.addEventListener("click", function () {
         toggle(button.dataset.filterCategory, button.dataset.filterValue);
