@@ -1929,3 +1929,78 @@ class EagerImageTests(TestCase):
 
         self.assertEqual(self._eager_flags(),
                          [True, True, True, False, False, False])
+
+
+class CacheHeaderTests(TestCase):
+    """Pages must be revalidated, not reused blind.
+
+    A deploy changes the HTML and the ?v= stamps together. If the browser keeps
+    the old HTML it never asks for the new stylesheet, which is how a release
+    could land on the server and not on the visitor's screen.
+    """
+
+    def setUp(self):
+        Project.objects.create(
+            title="Referral Pipeline", briefDescription="b", content="c",
+            language="Python")
+
+    def test_pages_are_marked_for_revalidation(self):
+        for name in ("main:index", "main:portfolio", "main:contact"):
+            with self.subTest(page=name):
+                response = self.client.get(reverse(name))
+
+                self.assertEqual(response.headers["Cache-Control"], "no-cache")
+
+    def test_pages_carry_an_etag(self):
+        """Revalidation is only cheap if there is something to revalidate
+        against."""
+        response = self.client.get(reverse("main:index"))
+
+        self.assertIn("ETag", response.headers)
+
+    def test_an_unchanged_page_comes_back_as_304(self):
+        first = self.client.get(reverse("main:index"))
+
+        second = self.client.get(reverse("main:index"),
+                                 headers={"if-none-match": first.headers["ETag"]})
+
+        self.assertEqual(second.status_code, 304)
+
+    def test_a_changed_page_is_sent_in_full(self):
+        first = self.client.get(reverse("main:portfolio"))
+
+        Project.objects.create(
+            title="Something New", briefDescription="b", content="c",
+            language="Python")
+        second = self.client.get(reverse("main:portfolio"),
+                                 headers={"if-none-match": first.headers["ETag"]})
+
+        self.assertEqual(second.status_code, 200)
+        self.assertIn("Something New", second.content.decode())
+
+    def test_the_admin_keeps_its_own_stricter_policy(self):
+        """Django already marks admin pages no-store. Overwriting that with a
+        weaker header would let a logged-out browser show a cached admin page.
+        """
+        from django.contrib.auth.models import User
+
+        User.objects.create_superuser("editor", "e@example.com", "pw")
+        self.client.force_login(User.objects.get(username="editor"))
+
+        response = self.client.get(reverse("admin:main_project_changelist"))
+
+        self.assertIn("no-store", response.headers["Cache-Control"])
+
+    def test_a_non_html_response_is_left_alone(self):
+        """The rule is about documents that reference versioned assets, not
+        about everything the site returns."""
+        from django.http import HttpResponse
+
+        from main.middleware import HtmlRevalidationMiddleware
+
+        middleware = HtmlRevalidationMiddleware(
+            lambda request: HttpResponse(b"{}", content_type="application/json"))
+
+        response = middleware(None)
+
+        self.assertNotIn("Cache-Control", response.headers)

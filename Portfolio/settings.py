@@ -64,6 +64,11 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # ConditionalGet adds the ETag that makes revalidation cheap; the one after
+    # it asks browsers to revalidate HTML at all. Without the pair, a visitor
+    # keeps the previous deploy's page and never requests the new stylesheet.
+    'django.middleware.http.ConditionalGetMiddleware',
+    'main.middleware.HtmlRevalidationMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
