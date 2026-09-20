@@ -5,14 +5,28 @@
     <div class="column">
         <h1 class="page-title">{{ project.title }}</h1>
         <dl class="meta-list">
+            {% if project.date_range %}
+            <dt>When</dt>
+            <dd>{{ project.date_range }}</dd>
+            {% endif %}
+            {% if project.language and project.language != "Unspecified" %}
             <dt>Language</dt>
             <dd>{{ project.language }}</dd>
+            {% endif %}
+            {% if project.capabilities %}
+            <dt>Kind of work</dt>
+            <dd>{% for capability in project.capabilities %}{{ capability.skill }}{% if not forloop.last %}, {% endif %}{% endfor %}</dd>
+            {% endif %}
             {% if project.githubLink != None %}
             <dt>Source</dt>
             <dd><a href="{{ project.githubLink }}" target="_blank" rel="noopener noreferrer">{{ project.githubLink }}<span class="sr-only"> (opens in a new tab)</span></a></dd>
             {% endif %}
         </dl>
     </div>
+
+    {% if project.outcome %}
+    <p class="outcome column"><span class="outcome__label">Outcome</span>{{ project.outcome }}</p>
+    {% endif %}
 
     <div class="panel column">
         {{ project.content|linebreaks }}

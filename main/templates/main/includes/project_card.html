@@ -1,0 +1,56 @@
+{% load static versioned_static %}
+{% comment %}One project card. Extracted so Featured work and the archive below
+it cannot drift apart. Expects `project`, `projDetails` and `defaultImage`.
+{% endcomment %}
+<article class="card project-card {% if not project.is_personal %}project-card--professional{% endif %}"
+         data-filter-lang="{{ projDetails.filterLang }}"
+         data-filter-personal-status="{{ project.kind }}"
+         data-filter-capability="{{ projDetails.filterCapability }}">
+    <div class="project-card__media">
+        {% if projDetails.image == None %}
+        <img src="{% versioned_static defaultImage %}" alt="" decoding="async"{% if projDetails.lazy %} loading="lazy"{% endif %}>
+        {% else %}
+        <img src="{{ projDetails.image }}" alt="Preview of {{ project.title }}" decoding="async"{% if projDetails.lazy %} loading="lazy"{% endif %}>
+        {% endif %}
+    </div>
+    <div class="card__body project-card__body">
+        {% comment %}h3 under a "Featured work" heading, h2 in the flat layout —
+        otherwise the level skips when no project is featured.{% endcomment %}
+        <h{{ card_heading|default:"2" }} class="card__title">{{ project.title }}</h{{ card_heading|default:"2" }}>
+
+        {% if project.date_range %}
+        <p class="project-card__dates">{{ project.date_range }}</p>
+        {% endif %}
+
+        <ul class="project-card__tags">
+            <li class="tag tag--kind">{{ project.kind }}</li>
+            {% for capability in projDetails.capabilityList %}
+            <li class="tag tag--capability">{{ capability.skill }}</li>
+            {% endfor %}
+        </ul>
+
+        {% if project.outcome %}
+        <p class="project-card__outcome">{{ project.outcome }}</p>
+        {% endif %}
+
+        <p class="card__text project-card__summary">{{ project.briefDescription }}</p>
+
+        {% comment %}Languages and platforms sit below the description and in a
+        quieter style. They are still here for keyword matching; they are just
+        no longer what the card leads with.{% endcomment %}
+        <ul class="project-card__tech">
+            {% comment %}"Unspecified" is the model default, not a language. It
+            printed literally beside real ones and read as a bug.{% endcomment %}
+            {% for lang in projDetails.languageList %}{% if lang != "Unspecified" %}
+            <li>{{ lang }}</li>
+            {% endif %}{% endfor %}
+            {% for skill in projDetails.supportingList %}
+            <li>{{ skill.skill }}</li>
+            {% endfor %}
+        </ul>
+
+        <p class="project-card__link">
+            <a href="{% url 'main:project' project.slug %}">View project<span class="sr-only"> {{ project.title }}</span> &rarr;</a>
+        </p>
+    </div>
+</article>
